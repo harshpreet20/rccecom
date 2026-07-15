@@ -38,6 +38,14 @@ export const storeConfig = {
   /** Support email shown in the footer. */
   supportEmail:
     process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "racquetsclubcommunity@gmail.com",
+
+  /** Canonical public URL of the store (for SEO metadata, sitemap, JSON-LD). */
+  siteUrl: (
+    process.env.NEXT_PUBLIC_SITE_URL || "https://store.racquetsclubcommunity.com"
+  ).replace(/\/$/, ""),
+
+  /** Instagram handle for brand social links. */
+  instagram: "racquetsclubcommunity",
 } as const;
 
 /** True when a customer can pay — a UPI ID is configured. */

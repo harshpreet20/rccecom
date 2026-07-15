@@ -24,6 +24,9 @@ type Row = {
   image: string | null;
   sold_out: boolean | null;
   badge: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string[] | null;
 };
 
 function mapRow(r: Row): Product {
@@ -42,6 +45,9 @@ function mapRow(r: Row): Product {
     image: r.image ?? undefined,
     soldOut: r.sold_out ?? false,
     badge: r.badge ?? undefined,
+    seoTitle: r.seo_title ?? undefined,
+    seoDescription: r.seo_description ?? undefined,
+    seoKeywords: r.seo_keywords?.length ? r.seo_keywords : undefined,
   };
 }
 

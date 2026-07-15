@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchProducts } from "@/lib/catalogue";
 import { storeConfig } from "@/lib/config";
+import { STORE_FAQS, faqJsonLd } from "@/lib/seo";
 import { ProductCard } from "@/components/ProductCard";
 
 // Always reflect the latest CRM-managed catalogue.
@@ -118,6 +119,29 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* FAQ — helps shoppers and grounds GEO / AI answer engines */}
+      <section className="mx-auto max-w-3xl px-4 py-12">
+        <h2 className="text-2xl font-black text-rcc-green">Frequently asked</h2>
+        <dl className="mt-6 space-y-3">
+          {STORE_FAQS.map((f) => (
+            <div
+              key={f.q}
+              className="rounded-2xl border border-rcc-green/10 bg-white p-5"
+            >
+              <dt className="font-bold text-rcc-ink">{f.q}</dt>
+              <dd className="mt-1 text-sm leading-relaxed text-rcc-green/70">
+                {f.a}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(STORE_FAQS)) }}
+      />
     </div>
   );
 }

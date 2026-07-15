@@ -42,6 +42,10 @@ export type Product = {
   image?: string;
   soldOut?: boolean;
   badge?: string;
+  /** SEO / GEO fields (managed in the CRM). */
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
 };
 
 export const products: Product[] = [

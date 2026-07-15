@@ -1,14 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchProduct, fetchProducts } from "@/lib/catalogue";
 import { formatMoney } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
+import { productMetadata, productJsonLd } from "@/lib/seo";
 import { ProductImage } from "@/components/ProductImage";
 import { AddToCart } from "@/components/AddToCart";
 import { ProductCard } from "@/components/ProductCard";
+import { SizeChart } from "@/components/SizeChart";
 
 // Reflect CRM catalogue edits without a rebuild.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const product = await fetchProduct(params.slug);
+  if (!product) return { title: `Not found · ${storeConfig.shortName}` };
+  return productMetadata(product);
+}
 
 export default async function ProductPage({
   params,
@@ -18,11 +31,18 @@ export default async function ProductPage({
   const product = await fetchProduct(params.slug);
   if (!product) notFound();
 
+  const isJerseyKit = /jersey/i.test(product.category) || /jersey/i.test(product.name);
+
   const all = await fetchProducts();
   const related = all.filter((p) => p.slug !== product.slug).slice(0, 4);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Product structured data for SEO rich results + GEO answer engines */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+      />
       <nav className="mb-6 text-sm text-rcc-green/60">
         <Link href="/" className="hover:underline">
           Shop
@@ -57,6 +77,12 @@ export default async function ProductPage({
           <div className="mt-6 max-w-sm">
             <AddToCart product={product} />
           </div>
+
+          {product.sizes && (
+            <div className="mt-3">
+              <SizeChart withShorts={isJerseyKit} />
+            </div>
+          )}
 
           <div className="mt-8 space-y-4 border-t border-rcc-green/10 pt-6 text-sm leading-relaxed text-rcc-green/80">
             <p>{product.description}</p>
