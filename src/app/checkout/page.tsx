@@ -1,0 +1,427 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useCart } from "@/lib/cart-context";
+import { formatMoney, describeCustom } from "@/lib/format";
+import { storeConfig } from "@/lib/config";
+import { generateOrderRef } from "@/lib/upi";
+import { buildWhatsappOrderUrl } from "@/lib/whatsapp";
+import { UpiQr } from "@/components/UpiQr";
+import type { CustomerDetails, OrderPayload } from "@/lib/types";
+
+type Step = "details" | "pay" | "done";
+
+export default function CheckoutPage() {
+  const { lines, subtotal, clear } = useCart();
+  const [step, setStep] = useState<Step>("details");
+  const [orderRef] = useState(generateOrderRef);
+  const [customer, setCustomer] = useState<CustomerDetails>({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    notes: "",
+  });
+  const [upiTxnRef, setUpiTxnRef] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<OrderPayload | null>(null);
+  const [saveState, setSaveState] = useState<"saved" | "local" | "">("");
+
+  const note = useMemo(
+    () => `${storeConfig.shortName} merch ${orderRef}`,
+    [orderRef],
+  );
+
+  // Cart emptied out (e.g. after success) and not yet on the done screen.
+  if (lines.length === 0 && step !== "done") {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <span className="text-5xl" aria-hidden>
+          🛒
+        </span>
+        <h1 className="mt-4 text-2xl font-black text-rcc-green">
+          Your cart is empty
+        </h1>
+        <p className="mt-2 text-rcc-green/60">
+          Add some RCC merch before checking out.
+        </p>
+        <Link
+          href="/"
+          className="mt-6 inline-block rounded-full bg-rcc-green px-6 py-3 font-bold text-rcc-sand hover:bg-rcc-leaf"
+        >
+          Browse the collection
+        </Link>
+      </div>
+    );
+  }
+
+  function validateDetails() {
+    const e: Record<string, string> = {};
+    if (!customer.name.trim()) e.name = "Please enter your name.";
+    if (!/^[6-9]\d{9}$/.test(customer.phone.replace(/\D/g, "").slice(-10)))
+      e.phone = "Enter a valid 10-digit mobile number.";
+    if (customer.address.trim().length < 10)
+      e.address = "Enter your full delivery address.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function goToPay() {
+    if (validateDetails()) {
+      setStep("pay");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  async function placeOrder() {
+    if (!upiTxnRef.trim()) {
+      setErrors({ upi: "Enter the UPI reference / UTR from your payment app." });
+      return;
+    }
+    setErrors({});
+    setSubmitting(true);
+
+    const payload: OrderPayload = {
+      orderRef,
+      items: lines,
+      amount: subtotal,
+      customer,
+      upiTxnRef: upiTxnRef.trim(),
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      setSaveState(data?.persisted ? "saved" : "local");
+    } catch {
+      // Order still captured via the WhatsApp handoff below.
+      setSaveState("local");
+    }
+
+    setPlacedOrder(payload);
+    setStep("done");
+    clear();
+    setSubmitting(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <Stepper step={step} />
+
+      {step === "done" && placedOrder ? (
+        <OrderConfirmation
+          order={placedOrder}
+          saveState={saveState}
+        />
+      ) : (
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
+          <div>
+            {step === "details" && (
+              <DetailsForm
+                customer={customer}
+                setCustomer={setCustomer}
+                errors={errors}
+                onContinue={goToPay}
+              />
+            )}
+
+            {step === "pay" && (
+              <div className="grid gap-6 sm:grid-cols-2">
+                <UpiQr amount={subtotal} note={note} orderRef={orderRef} />
+                <div className="rounded-2xl border border-rcc-green/10 bg-white p-5">
+                  <h3 className="font-bold text-rcc-green">
+                    After you&apos;ve paid
+                  </h3>
+                  <p className="mt-1 text-sm text-rcc-green/60">
+                    Enter the UPI reference number (UTR) shown in your payment
+                    app so we can match your payment and confirm your order.
+                  </p>
+                  <label className="mt-4 block text-sm font-semibold text-rcc-green">
+                    UPI reference / UTR
+                    <input
+                      value={upiTxnRef}
+                      onChange={(e) => setUpiTxnRef(e.target.value)}
+                      placeholder="e.g. 412345678901"
+                      className="mt-1 w-full rounded-lg border border-rcc-green/20 bg-rcc-sand px-3 py-2.5 font-mono text-rcc-ink outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30"
+                    />
+                  </label>
+                  {errors.upi && (
+                    <p className="mt-1 text-xs font-semibold text-rcc-clay">
+                      {errors.upi}
+                    </p>
+                  )}
+                  <button
+                    onClick={placeOrder}
+                    disabled={submitting}
+                    className="mt-4 w-full rounded-full bg-rcc-green py-3 font-bold text-rcc-sand transition hover:bg-rcc-leaf disabled:opacity-60"
+                  >
+                    {submitting ? "Placing order…" : "I've paid — place order"}
+                  </button>
+                  <button
+                    onClick={() => setStep("details")}
+                    className="mt-2 w-full rounded-full py-2 text-sm font-semibold text-rcc-green/60 hover:text-rcc-green"
+                  >
+                    ← Back to details
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <OrderSummary lines={lines} subtotal={subtotal} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stepper({ step }: { step: Step }) {
+  const steps: { key: Step; label: string }[] = [
+    { key: "details", label: "Your details" },
+    { key: "pay", label: "Pay by UPI" },
+    { key: "done", label: "Confirmed" },
+  ];
+  const activeIndex = steps.findIndex((s) => s.key === step);
+  return (
+    <ol className="flex items-center gap-2 text-sm font-semibold">
+      {steps.map((s, i) => (
+        <li key={s.key} className="flex items-center gap-2">
+          <span
+            className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${
+              i <= activeIndex
+                ? "bg-rcc-green text-rcc-sand"
+                : "bg-rcc-green/10 text-rcc-green/40"
+            }`}
+          >
+            {i < activeIndex ? "✓" : i + 1}
+          </span>
+          <span
+            className={
+              i <= activeIndex ? "text-rcc-green" : "text-rcc-green/40"
+            }
+          >
+            {s.label}
+          </span>
+          {i < steps.length - 1 && (
+            <span className="mx-1 h-px w-6 bg-rcc-green/20" />
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function DetailsForm({
+  customer,
+  setCustomer,
+  errors,
+  onContinue,
+}: {
+  customer: CustomerDetails;
+  setCustomer: (c: CustomerDetails) => void;
+  errors: Record<string, string>;
+  onContinue: () => void;
+}) {
+  const field =
+    "mt-1 w-full rounded-lg border border-rcc-green/20 bg-white px-3 py-2.5 text-rcc-ink outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30";
+  return (
+    <div className="rounded-2xl border border-rcc-green/10 bg-white p-5 sm:p-6">
+      <h2 className="text-lg font-black text-rcc-green">Delivery details</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="text-sm font-semibold text-rcc-green">
+          Full name
+          <input
+            value={customer.name}
+            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+            className={field}
+            placeholder="Priya Sharma"
+          />
+          {errors.name && (
+            <span className="mt-1 block text-xs font-semibold text-rcc-clay">
+              {errors.name}
+            </span>
+          )}
+        </label>
+        <label className="text-sm font-semibold text-rcc-green">
+          Mobile (WhatsApp)
+          <input
+            value={customer.phone}
+            onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+            className={field}
+            placeholder="9876543210"
+            inputMode="numeric"
+          />
+          {errors.phone && (
+            <span className="mt-1 block text-xs font-semibold text-rcc-clay">
+              {errors.phone}
+            </span>
+          )}
+        </label>
+        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+          Email (optional)
+          <input
+            value={customer.email}
+            onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+            className={field}
+            placeholder="you@email.com"
+            type="email"
+          />
+        </label>
+        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+          Delivery address
+          <textarea
+            value={customer.address}
+            onChange={(e) =>
+              setCustomer({ ...customer, address: e.target.value })
+            }
+            className={field}
+            rows={3}
+            placeholder="Flat / house, street, area, city, state, PIN"
+          />
+          {errors.address && (
+            <span className="mt-1 block text-xs font-semibold text-rcc-clay">
+              {errors.address}
+            </span>
+          )}
+        </label>
+        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+          Order notes (optional)
+          <input
+            value={customer.notes}
+            onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
+            className={field}
+            placeholder="Preferred delivery time, landmark, etc."
+          />
+        </label>
+      </div>
+      <button
+        onClick={onContinue}
+        className="mt-6 w-full rounded-full bg-rcc-green py-3 font-bold text-rcc-sand transition hover:bg-rcc-leaf sm:w-auto sm:px-8"
+      >
+        Continue to payment →
+      </button>
+    </div>
+  );
+}
+
+function OrderSummary({
+  lines,
+  subtotal,
+}: {
+  lines: OrderPayload["items"];
+  subtotal: number;
+}) {
+  return (
+    <aside className="h-fit rounded-2xl border border-rcc-green/10 bg-white p-5 lg:sticky lg:top-20">
+      <h3 className="font-black text-rcc-green">Order summary</h3>
+      <ul className="mt-3 divide-y divide-rcc-green/10">
+        {lines.map((l) => (
+          <li key={`${l.slug}-${l.size ?? ""}`} className="flex gap-3 py-3">
+            <div
+              className="grid h-12 w-12 flex-none place-items-center rounded-lg text-xl"
+              style={{ background: `${l.accent}22` }}
+            >
+              <span aria-hidden>{l.emoji}</span>
+            </div>
+            <div className="flex flex-1 items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-bold text-rcc-ink">
+                  {l.name}
+                  {l.size && (
+                    <span className="font-medium text-rcc-green/50">
+                      {" "}
+                      · {l.size}
+                    </span>
+                  )}
+                </p>
+                {l.custom && (
+                  <p className="text-xs font-semibold text-rcc-leaf">
+                    {describeCustom(l.custom)}
+                  </p>
+                )}
+                <p className="text-xs text-rcc-green/50">Qty {l.qty}</p>
+              </div>
+              <span className="text-sm font-bold text-rcc-green">
+                {formatMoney(l.qty * l.price)}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3 space-y-1 border-t border-rcc-green/10 pt-3 text-sm">
+        <div className="flex justify-between text-rcc-green/60">
+          <span>Subtotal</span>
+          <span>{formatMoney(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-rcc-green/60">
+          <span>Delivery</span>
+          <span>Arranged on WhatsApp</span>
+        </div>
+        <div className="flex justify-between pt-1 text-lg font-black text-rcc-green">
+          <span>Total</span>
+          <span>{formatMoney(subtotal)}</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function OrderConfirmation({
+  order,
+  saveState,
+}: {
+  order: OrderPayload;
+  saveState: "saved" | "local" | "";
+}) {
+  const waUrl = buildWhatsappOrderUrl(order);
+  return (
+    <div className="mx-auto mt-8 max-w-lg text-center">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-rcc-lime text-3xl">
+        ✅
+      </div>
+      <h1 className="mt-4 text-2xl font-black text-rcc-green">
+        Thanks! Your order is placed.
+      </h1>
+      <p className="mt-1 text-rcc-green/60">
+        Order <span className="font-mono font-bold">{order.orderRef}</span> for{" "}
+        {formatMoney(order.amount)}.
+      </p>
+
+      <div className="mt-6 rounded-2xl border border-rcc-green/10 bg-white p-5 text-left">
+        <p className="text-sm font-bold text-rcc-green">One last step</p>
+        <p className="mt-1 text-sm text-rcc-green/60">
+          Send us your order &amp; UPI reference on WhatsApp so we can confirm
+          your payment and dispatch. Tap the button below — the message is
+          pre-filled.
+        </p>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] py-3 font-bold text-white transition hover:brightness-95"
+        >
+          <span aria-hidden>💬</span> Send order on WhatsApp
+        </a>
+        <p className="mt-3 text-center text-xs text-rcc-green/40">
+          {saveState === "saved"
+            ? "Your order was also saved to RCC's system."
+            : "Please send the WhatsApp message so we don't miss your order."}
+        </p>
+      </div>
+
+      <Link
+        href="/"
+        className="mt-6 inline-block rounded-full border border-rcc-green/20 px-6 py-3 font-bold text-rcc-green hover:bg-rcc-green/5"
+      >
+        Continue shopping
+      </Link>
+    </div>
+  );
+}
