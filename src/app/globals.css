@@ -12,15 +12,35 @@ html {
 }
 
 body {
-  @apply bg-rcc-sand text-rcc-ink antialiased;
+  @apply bg-rcc-night text-rcc-sand antialiased;
 }
 
-/* Subtle court-line texture for hero sections. */
+::selection {
+  background: #c9a24b;
+  color: #0a100f;
+}
+
+/* Gold wordmark gradient */
+.text-gold-grad {
+  background-image: linear-gradient(90deg, #e0c074, #c9a24b 55%, #a8863a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtle court-line texture for hero / dark panels. */
 .court-lines {
   background-image:
-    linear-gradient(0deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    linear-gradient(0deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 44px 44px;
+}
+
+/* Faint radial spotlight for hero. */
+.spotlight {
+  background:
+    radial-gradient(60% 60% at 60% 20%, rgba(42, 163, 155, 0.18), transparent 70%),
+    radial-gradient(50% 50% at 15% 30%, rgba(201, 162, 75, 0.12), transparent 70%);
 }
 
 @keyframes pop {
@@ -33,7 +53,6 @@ body {
     opacity: 1;
   }
 }
-
 .animate-pop {
   animation: pop 0.18s ease-out;
 }

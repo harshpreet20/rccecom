@@ -27,6 +27,9 @@ type Row = {
   seo_title: string | null;
   seo_description: string | null;
   seo_keywords: string[] | null;
+  kind: string | null;
+  amazon_url: string | null;
+  flipkart_url: string | null;
 };
 
 function mapRow(r: Row): Product {
@@ -45,6 +48,9 @@ function mapRow(r: Row): Product {
     image: r.image ?? undefined,
     soldOut: r.sold_out ?? false,
     badge: r.badge ?? undefined,
+    kind: r.kind === "membership" ? "membership" : "physical",
+    amazonUrl: r.amazon_url ?? undefined,
+    flipkartUrl: r.flipkart_url ?? undefined,
     seoTitle: r.seo_title ?? undefined,
     seoDescription: r.seo_description ?? undefined,
     seoKeywords: r.seo_keywords?.length ? r.seo_keywords : undefined,

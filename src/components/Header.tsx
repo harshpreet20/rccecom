@@ -4,42 +4,60 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { Logo } from "./Logo";
 
+const LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/#catalogue", label: "Shop" },
+  { href: "/#catalogue", label: "Collections" },
+  { href: "/#customize", label: "Customize" },
+  { href: "/#about", label: "About RCC" },
+  { href: "/#contact", label: "Contact" },
+];
+
 export function Header() {
   const { count, openCart } = useCart();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rcc-green/10 bg-rcc-sand/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" aria-label="RCC merch store home">
+    <header className="sticky top-0 z-40 border-b border-rcc-line bg-rcc-night/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        <Link href="/" aria-label="RCC store home">
           <Logo />
         </Link>
 
-        <nav className="flex items-center gap-1 text-sm font-semibold">
-          <Link
-            href="/#catalogue"
-            className="hidden rounded-full px-3 py-2 text-rcc-green hover:bg-rcc-green/5 sm:block"
-          >
-            Shop
-          </Link>
+        <nav className="hidden items-center gap-6 text-[13px] font-semibold uppercase tracking-wide lg:flex">
+          {LINKS.map((l, i) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              className={`transition hover:text-rcc-gold ${
+                i === 0 ? "text-rcc-gold" : "text-rcc-mist"
+              }`}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-1.5">
           <Link
             href="/track"
-            className="hidden rounded-full px-3 py-2 text-rcc-green hover:bg-rcc-green/5 sm:block"
+            className="grid h-9 w-9 place-items-center rounded-full text-rcc-mist transition hover:text-rcc-gold"
+            aria-label="Track order"
           >
-            Track order
+            🔍
           </Link>
           <button
             onClick={openCart}
-            className="relative ml-1 inline-flex items-center gap-2 rounded-full bg-rcc-green px-4 py-2 font-semibold text-rcc-sand transition hover:bg-rcc-leaf"
+            className="relative grid h-9 w-9 place-items-center rounded-full text-rcc-mist transition hover:text-rcc-gold"
+            aria-label="Open cart"
           >
-            <span aria-hidden>🛒</span>
-            <span>Cart</span>
+            🛒
             {count > 0 && (
-              <span className="animate-pop grid h-5 min-w-5 place-items-center rounded-full bg-rcc-lime px-1 text-xs font-black text-rcc-green">
+              <span className="animate-pop absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-rcc-gold px-1 text-xs font-black text-rcc-night">
                 {count}
               </span>
             )}
           </button>
-        </nav>
+        </div>
       </div>
     </header>
   );

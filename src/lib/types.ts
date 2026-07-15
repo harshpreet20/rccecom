@@ -8,6 +8,8 @@ export type CartLine = {
   size?: string;
   /** Personalization values, e.g. { name: "HARSHITA", number: "88" }. */
   custom?: Record<string, string>;
+  /** "physical" or "membership" — memberships aren't shipped. */
+  kind?: "physical" | "membership";
   emoji: string;
   accent: string;
 };

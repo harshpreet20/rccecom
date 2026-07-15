@@ -42,6 +42,11 @@ export type Product = {
   image?: string;
   soldOut?: boolean;
   badge?: string;
+  /** "physical" goods vs "membership" (no shipping, no size). */
+  kind?: "physical" | "membership";
+  /** Optional external marketplace links (managed in the CRM). */
+  amazonUrl?: string;
+  flipkartUrl?: string;
   /** SEO / GEO fields (managed in the CRM). */
   seoTitle?: string;
   seoDescription?: string;

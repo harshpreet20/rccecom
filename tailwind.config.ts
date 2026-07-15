@@ -10,14 +10,21 @@ const config: Config = {
     extend: {
       colors: {
         rcc: {
-          // RCC brand palette — deep teal + seafoam mint (from the kit design).
-          // Token names kept stable; values tuned to the RCC identity.
-          ink: "#0b2b2b", // near-black teal (headings)
-          green: "#0e5a62", // primary deep teal (collar / shorts)
-          leaf: "#14757e", // lighter teal for hovers
-          lime: "#8fe7db", // bright seafoam accent (badges / highlights)
-          sand: "#f1f6f4", // soft mint-tinted off-white (page bg / light text)
-          clay: "#c2503a", // warm red for errors
+          // RCC brand palette — premium dark "club showcase" theme.
+          ink: "#0b2b2b",
+          green: "#0e5a62", // deep teal
+          leaf: "#2aa39b", // brighter teal accent (reads on dark)
+          lime: "#8fe7db", // seafoam highlight
+          sand: "#f1f6f4", // light text on dark
+          clay: "#e0674a", // error
+          // Dark surfaces + gold
+          night: "#0a100f", // page background (near-black teal)
+          panel: "#121c1a", // cards / surfaces
+          panel2: "#0e1615", // deeper panel
+          line: "#22302e", // borders on dark
+          mist: "#aebcb9", // muted body text
+          gold: "#c9a24b", // primary gold accent
+          goldsoft: "#e0c074", // gold hover / gradient
         },
       },
       fontFamily: {

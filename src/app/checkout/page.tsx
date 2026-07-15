@@ -43,10 +43,10 @@ export default function CheckoutPage() {
         <span className="text-5xl" aria-hidden>
           🛒
         </span>
-        <h1 className="mt-4 text-2xl font-black text-rcc-green">
+        <h1 className="mt-4 text-2xl font-black text-rcc-sand">
           Your cart is empty
         </h1>
-        <p className="mt-2 text-rcc-green/60">
+        <p className="mt-2 text-rcc-mist">
           Add some RCC merch before checking out.
         </p>
         <Link
@@ -141,21 +141,21 @@ export default function CheckoutPage() {
             {step === "pay" && (
               <div className="grid gap-6 sm:grid-cols-2">
                 <UpiQr amount={pricing.total} note={note} orderRef={orderRef} />
-                <div className="rounded-2xl border border-rcc-green/10 bg-white p-5">
-                  <h3 className="font-bold text-rcc-green">
+                <div className="rounded-2xl border border-rcc-line bg-rcc-panel p-5">
+                  <h3 className="font-bold text-rcc-sand">
                     After you&apos;ve paid
                   </h3>
-                  <p className="mt-1 text-sm text-rcc-green/60">
+                  <p className="mt-1 text-sm text-rcc-mist">
                     Enter the UPI reference number (UTR) shown in your payment
                     app so we can match your payment and confirm your order.
                   </p>
-                  <label className="mt-4 block text-sm font-semibold text-rcc-green">
+                  <label className="mt-4 block text-sm font-semibold text-rcc-sand">
                     UPI reference / UTR
                     <input
                       value={upiTxnRef}
                       onChange={(e) => setUpiTxnRef(e.target.value)}
                       placeholder="e.g. 412345678901"
-                      className="mt-1 w-full rounded-lg border border-rcc-green/20 bg-rcc-sand px-3 py-2.5 font-mono text-rcc-ink outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30"
+                      className="mt-1 w-full rounded-lg border border-rcc-line bg-rcc-panel2 px-3 py-2.5 font-mono text-rcc-sand outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30"
                     />
                   </label>
                   {errors.upi && (
@@ -172,7 +172,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     onClick={() => setStep("details")}
-                    className="mt-2 w-full rounded-full py-2 text-sm font-semibold text-rcc-green/60 hover:text-rcc-green"
+                    className="mt-2 w-full rounded-full py-2 text-sm font-semibold text-rcc-mist hover:text-rcc-sand"
                   >
                     ← Back to details
                   </button>
@@ -203,14 +203,14 @@ function Stepper({ step }: { step: Step }) {
             className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${
               i <= activeIndex
                 ? "bg-rcc-green text-rcc-sand"
-                : "bg-rcc-green/10 text-rcc-green/40"
+                : "bg-rcc-panel text-rcc-mist/60"
             }`}
           >
             {i < activeIndex ? "✓" : i + 1}
           </span>
           <span
             className={
-              i <= activeIndex ? "text-rcc-green" : "text-rcc-green/40"
+              i <= activeIndex ? "text-rcc-sand" : "text-rcc-mist/60"
             }
           >
             {s.label}
@@ -236,12 +236,12 @@ function DetailsForm({
   onContinue: () => void;
 }) {
   const field =
-    "mt-1 w-full rounded-lg border border-rcc-green/20 bg-white px-3 py-2.5 text-rcc-ink outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30";
+    "mt-1 w-full rounded-lg border border-rcc-line bg-rcc-panel px-3 py-2.5 text-rcc-sand outline-none focus:border-rcc-leaf focus:ring-2 focus:ring-rcc-leaf/30";
   return (
-    <div className="rounded-2xl border border-rcc-green/10 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-black text-rcc-green">Delivery details</h2>
+    <div className="rounded-2xl border border-rcc-line bg-rcc-panel p-5 sm:p-6">
+      <h2 className="text-lg font-black text-rcc-sand">Delivery details</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold text-rcc-green">
+        <label className="text-sm font-semibold text-rcc-sand">
           Full name
           <input
             value={customer.name}
@@ -255,7 +255,7 @@ function DetailsForm({
             </span>
           )}
         </label>
-        <label className="text-sm font-semibold text-rcc-green">
+        <label className="text-sm font-semibold text-rcc-sand">
           Mobile (WhatsApp)
           <input
             value={customer.phone}
@@ -270,7 +270,7 @@ function DetailsForm({
             </span>
           )}
         </label>
-        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+        <label className="text-sm font-semibold text-rcc-sand sm:col-span-2">
           Email (optional)
           <input
             value={customer.email}
@@ -280,7 +280,7 @@ function DetailsForm({
             type="email"
           />
         </label>
-        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+        <label className="text-sm font-semibold text-rcc-sand sm:col-span-2">
           Delivery address
           <textarea
             value={customer.address}
@@ -297,7 +297,7 @@ function DetailsForm({
             </span>
           )}
         </label>
-        <label className="text-sm font-semibold text-rcc-green sm:col-span-2">
+        <label className="text-sm font-semibold text-rcc-sand sm:col-span-2">
           Order notes (optional)
           <input
             value={customer.notes}
@@ -325,9 +325,9 @@ function OrderSummary({
   pricing: PriceBreakdown;
 }) {
   return (
-    <aside className="h-fit rounded-2xl border border-rcc-green/10 bg-white p-5 lg:sticky lg:top-20">
-      <h3 className="font-black text-rcc-green">Order summary</h3>
-      <ul className="mt-3 divide-y divide-rcc-green/10">
+    <aside className="h-fit rounded-2xl border border-rcc-line bg-rcc-panel p-5 lg:sticky lg:top-20">
+      <h3 className="font-black text-rcc-sand">Order summary</h3>
+      <ul className="mt-3 divide-y divide-rcc-line">
         {lines.map((l) => (
           <li key={`${l.slug}-${l.size ?? ""}`} className="flex gap-3 py-3">
             <div
@@ -338,10 +338,10 @@ function OrderSummary({
             </div>
             <div className="flex flex-1 items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-bold text-rcc-ink">
+                <p className="text-sm font-bold text-rcc-sand">
                   {l.name}
                   {l.size && (
-                    <span className="font-medium text-rcc-green/50">
+                    <span className="font-medium text-rcc-mist/70">
                       {" "}
                       · {l.size}
                     </span>
@@ -352,33 +352,33 @@ function OrderSummary({
                     {describeCustom(l.custom)}
                   </p>
                 )}
-                <p className="text-xs text-rcc-green/50">Qty {l.qty}</p>
+                <p className="text-xs text-rcc-mist/70">Qty {l.qty}</p>
               </div>
-              <span className="text-sm font-bold text-rcc-green">
+              <span className="text-sm font-bold text-rcc-sand">
                 {formatMoney(l.qty * l.price)}
               </span>
             </div>
           </li>
         ))}
       </ul>
-      <div className="mt-3 space-y-1 border-t border-rcc-green/10 pt-3 text-sm">
-        <div className="flex justify-between text-rcc-green/60">
+      <div className="mt-3 space-y-1 border-t border-rcc-line pt-3 text-sm">
+        <div className="flex justify-between text-rcc-mist">
           <span>Subtotal</span>
           <span>{formatMoney(pricing.subtotal)}</span>
         </div>
         {pricing.tax > 0 && (
-          <div className="flex justify-between text-rcc-green/60">
+          <div className="flex justify-between text-rcc-mist">
             <span>GST ({pricing.taxRatePct}%)</span>
             <span>{formatMoney(pricing.tax)}</span>
           </div>
         )}
-        <div className="flex justify-between text-rcc-green/60">
+        <div className="flex justify-between text-rcc-mist">
           <span>Shipping</span>
           <span>
             {pricing.shipping > 0 ? formatMoney(pricing.shipping) : "Free"}
           </span>
         </div>
-        <div className="flex justify-between pt-1 text-lg font-black text-rcc-green">
+        <div className="flex justify-between pt-1 text-lg font-black text-rcc-sand">
           <span>Total</span>
           <span>{formatMoney(pricing.total)}</span>
         </div>
@@ -400,17 +400,17 @@ function OrderConfirmation({
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-rcc-lime text-3xl">
         ✅
       </div>
-      <h1 className="mt-4 text-2xl font-black text-rcc-green">
+      <h1 className="mt-4 text-2xl font-black text-rcc-sand">
         Thanks! Your order is placed.
       </h1>
-      <p className="mt-1 text-rcc-green/60">
+      <p className="mt-1 text-rcc-mist">
         Order <span className="font-mono font-bold">{order.orderRef}</span> for{" "}
         {formatMoney(order.amount)}.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-rcc-green/10 bg-white p-5 text-left">
-        <p className="text-sm font-bold text-rcc-green">One last step</p>
-        <p className="mt-1 text-sm text-rcc-green/60">
+      <div className="mt-6 rounded-2xl border border-rcc-line bg-rcc-panel p-5 text-left">
+        <p className="text-sm font-bold text-rcc-sand">One last step</p>
+        <p className="mt-1 text-sm text-rcc-mist">
           Send us your order &amp; UPI reference on WhatsApp so we can confirm
           your payment and dispatch. Tap the button below — the message is
           pre-filled.
@@ -423,7 +423,7 @@ function OrderConfirmation({
         >
           <span aria-hidden>💬</span> Send order on WhatsApp
         </a>
-        <p className="mt-3 text-center text-xs text-rcc-green/40">
+        <p className="mt-3 text-center text-xs text-rcc-mist/60">
           {saveState === "saved"
             ? "Your order was also saved to RCC's system."
             : "Please send the WhatsApp message so we don't miss your order."}
@@ -432,7 +432,7 @@ function OrderConfirmation({
 
       <Link
         href="/"
-        className="mt-6 inline-block rounded-full border border-rcc-green/20 px-6 py-3 font-bold text-rcc-green hover:bg-rcc-green/5"
+        className="mt-6 inline-block rounded-full border border-rcc-line px-6 py-3 font-bold text-rcc-sand hover:bg-rcc-panel"
       >
         Continue shopping
       </Link>

@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       qty,
       size,
       custom,
+      kind: product.kind,
       emoji: product.emoji,
       accent: product.accent,
     });

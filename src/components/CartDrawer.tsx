@@ -10,29 +10,29 @@ export function CartDrawer() {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={closeCart}
-        className={`fixed inset-0 z-50 bg-black/40 transition-opacity ${
+        className={`fixed inset-0 z-50 bg-black/60 transition-opacity ${
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden={!isOpen}
       />
 
-      {/* Panel */}
       <aside
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-rcc-sand shadow-2xl transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-rcc-panel2 shadow-2xl transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
         aria-label="Shopping cart"
         aria-hidden={!isOpen}
       >
-        <div className="flex items-center justify-between border-b border-rcc-green/10 px-5 py-4">
-          <h2 className="text-lg font-extrabold text-rcc-green">Your cart</h2>
+        <div className="flex items-center justify-between border-b border-rcc-line px-5 py-4">
+          <h2 className="text-lg font-black uppercase tracking-wide text-rcc-sand">
+            Your cart
+          </h2>
           <button
             onClick={closeCart}
-            className="rounded-full p-2 text-rcc-green hover:bg-rcc-green/10"
+            className="rounded-full p-2 text-rcc-mist hover:text-rcc-gold"
             aria-label="Close cart"
           >
             ✕
@@ -41,27 +41,23 @@ export function CartDrawer() {
 
         {lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <span className="text-5xl" aria-hidden>
-              🛒
-            </span>
-            <p className="font-semibold text-rcc-green">Your cart is empty</p>
-            <p className="text-sm text-rcc-green/60">
-              Add some RCC gear to get started.
-            </p>
+            <span className="text-5xl" aria-hidden>🛒</span>
+            <p className="font-semibold text-rcc-sand">Your cart is empty</p>
+            <p className="text-sm text-rcc-mist">Add some RCC gear to get started.</p>
             <button
               onClick={closeCart}
-              className="mt-2 rounded-full bg-rcc-green px-5 py-2.5 text-sm font-bold text-rcc-sand hover:bg-rcc-leaf"
+              className="mt-2 rounded-lg bg-rcc-gold px-5 py-2.5 text-sm font-black uppercase tracking-wide text-rcc-night hover:bg-rcc-goldsoft"
             >
               Browse merch
             </button>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-rcc-green/10 overflow-y-auto px-5">
+            <ul className="flex-1 divide-y divide-rcc-line overflow-y-auto px-5">
               {lines.map((l) => (
                 <li key={`${l.slug}-${l.size ?? ""}`} className="flex gap-3 py-4">
                   <div
-                    className="grid h-16 w-16 flex-none place-items-center rounded-xl text-2xl"
+                    className="grid h-16 w-16 flex-none place-items-center rounded-xl border border-rcc-line text-2xl"
                     style={{ background: `${l.accent}22` }}
                   >
                     <span aria-hidden>{l.emoji}</span>
@@ -69,16 +65,14 @@ export function CartDrawer() {
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-bold leading-tight text-rcc-ink">
+                        <p className="text-sm font-bold leading-tight text-rcc-sand">
                           {l.name}
                           {l.size && (
-                            <span className="ml-1 font-medium text-rcc-green/60">
-                              · {l.size}
-                            </span>
+                            <span className="ml-1 font-medium text-rcc-mist">· {l.size}</span>
                           )}
                         </p>
                         {l.custom && (
-                          <p className="text-xs font-semibold text-rcc-leaf">
+                          <p className="text-xs font-semibold text-rcc-gold">
                             {describeCustom(l.custom)}
                           </p>
                         )}
@@ -91,26 +85,26 @@ export function CartDrawer() {
                       </button>
                     </div>
                     <div className="mt-auto flex items-center justify-between pt-2">
-                      <div className="inline-flex items-center rounded-full border border-rcc-green/20 bg-white">
+                      <div className="inline-flex items-center rounded-full border border-rcc-line bg-rcc-panel">
                         <button
                           onClick={() => setQty(l.slug, l.size, l.custom, l.qty - 1)}
-                          className="grid h-8 w-8 place-items-center text-rcc-green hover:bg-rcc-green/10"
+                          className="grid h-8 w-8 place-items-center text-rcc-mist hover:text-rcc-gold"
                           aria-label="Decrease quantity"
                         >
                           −
                         </button>
-                        <span className="w-8 text-center text-sm font-bold">
+                        <span className="w-8 text-center text-sm font-bold text-rcc-sand">
                           {l.qty}
                         </span>
                         <button
                           onClick={() => setQty(l.slug, l.size, l.custom, l.qty + 1)}
-                          className="grid h-8 w-8 place-items-center text-rcc-green hover:bg-rcc-green/10"
+                          className="grid h-8 w-8 place-items-center text-rcc-mist hover:text-rcc-gold"
                           aria-label="Increase quantity"
                         >
                           +
                         </button>
                       </div>
-                      <span className="text-sm font-extrabold text-rcc-green">
+                      <span className="text-sm font-extrabold text-rcc-gold">
                         {formatMoney(l.qty * l.price)}
                       </span>
                     </div>
@@ -119,27 +113,21 @@ export function CartDrawer() {
               ))}
             </ul>
 
-            <div className="border-t border-rcc-green/10 bg-white px-5 py-4">
+            <div className="border-t border-rcc-line bg-rcc-panel px-5 py-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-rcc-green/70">Subtotal</span>
-                <span className="text-xl font-black text-rcc-green">
-                  {formatMoney(subtotal)}
-                </span>
+                <span className="text-rcc-mist">Subtotal</span>
+                <span className="text-xl font-black text-rcc-gold">{formatMoney(subtotal)}</span>
               </div>
-              <p className="mt-1 text-xs text-rcc-green/50">
+              <p className="mt-1 text-xs text-rcc-mist/70">
                 {storeConfig.taxRatePct}% GST &amp; shipping added at checkout.
-                Pay via UPI QR on the next step.
               </p>
               <Link
                 href="/checkout"
                 onClick={closeCart}
-                className="mt-3 block w-full rounded-full bg-rcc-green py-3 text-center font-bold text-rcc-sand transition hover:bg-rcc-leaf"
+                className="mt-3 block w-full rounded-lg bg-rcc-gold py-3 text-center font-black uppercase tracking-wide text-rcc-night transition hover:bg-rcc-goldsoft"
               >
                 Checkout · {formatMoney(subtotal)}
               </Link>
-              <p className="mt-2 text-center text-[11px] text-rcc-green/40">
-                Pays to {storeConfig.upiId}
-              </p>
             </div>
           </>
         )}

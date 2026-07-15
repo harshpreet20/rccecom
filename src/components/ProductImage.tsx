@@ -28,7 +28,7 @@ export function ProductImage({
     <div
       className={`court-lines relative flex h-full w-full items-center justify-center ${className}`}
       style={{
-        background: `radial-gradient(120% 120% at 30% 20%, ${product.accent}, ${product.accent}dd 45%, #07312f 130%)`,
+        background: `radial-gradient(120% 120% at 30% 20%, ${product.accent}, ${product.accent}cc 42%, #060b0a 130%)`,
       }}
       aria-label={product.name}
       role="img"
@@ -36,7 +36,7 @@ export function ProductImage({
       <span className="text-6xl drop-shadow-lg sm:text-7xl" aria-hidden>
         {product.emoji}
       </span>
-      <span className="absolute bottom-3 left-3 rounded-full bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/90 backdrop-blur">
+      <span className="absolute bottom-3 left-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rcc-gold/90 backdrop-blur">
         {product.category}
       </span>
     </div>

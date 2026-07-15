@@ -43,15 +43,15 @@ export default async function ProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
       />
-      <nav className="mb-6 text-sm text-rcc-green/60">
-        <Link href="/" className="hover:underline">
+      <nav className="mb-6 text-sm text-rcc-mist">
+        <Link href="/" className="hover:text-rcc-gold">
           Shop
         </Link>{" "}
-        / <span className="text-rcc-green">{product.name}</span>
+        / <span className="text-rcc-sand">{product.name}</span>
       </nav>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="overflow-hidden rounded-3xl border border-rcc-green/10 bg-white">
+        <div className="overflow-hidden rounded-3xl border border-rcc-line bg-rcc-panel">
           <div className="aspect-square">
             <ProductImage product={product} />
           </div>
@@ -59,19 +59,22 @@ export default async function ProductPage({
 
         <div className="flex flex-col">
           {product.badge && (
-            <span className="mb-2 w-fit rounded-full bg-rcc-lime px-3 py-1 text-xs font-black uppercase tracking-wider text-rcc-green">
+            <span className="mb-2 w-fit rounded-md bg-rcc-leaf px-3 py-1 text-xs font-black uppercase tracking-wider text-rcc-night">
               {product.badge}
             </span>
           )}
-          <h1 className="text-3xl font-black text-rcc-ink">{product.name}</h1>
-          <p className="mt-2 text-rcc-green/70">{product.blurb}</p>
+          <h1 className="text-3xl font-black uppercase tracking-tight text-rcc-sand">
+            {product.name}
+          </h1>
+          <p className="mt-2 text-rcc-mist">{product.blurb}</p>
 
-          <p className="mt-5 text-3xl font-black text-rcc-green">
+          <p className="mt-5 text-3xl font-black text-rcc-gold">
             {formatMoney(product.price)}
           </p>
-          <p className="text-xs text-rcc-green/50">
-            + {storeConfig.taxRatePct}% GST &amp; shipping · pay via UPI at
-            checkout
+          <p className="text-xs text-rcc-mist/70">
+            {product.kind === "membership"
+              ? `+ ${storeConfig.taxRatePct}% GST · pay via UPI at checkout`
+              : `+ ${storeConfig.taxRatePct}% GST & shipping · pay via UPI at checkout`}
           </p>
 
           <div className="mt-6 max-w-sm">
@@ -84,13 +87,44 @@ export default async function ProductPage({
             </div>
           )}
 
-          <div className="mt-8 space-y-4 border-t border-rcc-green/10 pt-6 text-sm leading-relaxed text-rcc-green/80">
+          {/* Also available on marketplaces (CRM-managed links) */}
+          {(product.amazonUrl || product.flipkartUrl) && (
+            <div className="mt-4 max-w-sm">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-rcc-mist">
+                Also available on
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.amazonUrl && (
+                  <a
+                    href={product.amazonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="flex items-center gap-2 rounded-lg border border-rcc-line bg-rcc-panel px-4 py-2.5 text-sm font-bold text-rcc-sand transition hover:border-[#ff9900]/60"
+                  >
+                    <span className="text-[#ff9900]">a</span> Buy on Amazon
+                  </a>
+                )}
+                {product.flipkartUrl && (
+                  <a
+                    href={product.flipkartUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="flex items-center gap-2 rounded-lg border border-rcc-line bg-rcc-panel px-4 py-2.5 text-sm font-bold text-rcc-sand transition hover:border-[#2874f0]/60"
+                  >
+                    <span className="text-[#2874f0]">🛍️</span> Buy on Flipkart
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8 space-y-4 border-t border-rcc-line pt-6 text-sm leading-relaxed text-rcc-mist">
             <p>{product.description}</p>
             {product.highlights && (
               <ul className="space-y-1.5">
                 {product.highlights.map((h) => (
-                  <li key={h} className="flex items-start gap-2 text-rcc-green/70">
-                    <span className="mt-0.5 text-rcc-leaf" aria-hidden>
+                  <li key={h} className="flex items-start gap-2 text-rcc-mist">
+                    <span className="mt-0.5 text-rcc-gold" aria-hidden>
                       ✓
                     </span>
                     <span>{h}</span>
@@ -98,18 +132,18 @@ export default async function ProductPage({
                 ))}
               </ul>
             )}
-            <ul className="grid grid-cols-2 gap-2 border-t border-rcc-green/10 pt-4 text-xs text-rcc-green/50">
+            <ul className="grid grid-cols-2 gap-2 border-t border-rcc-line pt-4 text-xs text-rcc-mist/70">
               <li>📦 Ships pan-India</li>
               <li>📱 UPI QR checkout</li>
               <li>💬 Support on WhatsApp</li>
-              <li>🎾 Community-first pricing</li>
+              <li>🏸 Community-first pricing</li>
             </ul>
           </div>
         </div>
       </div>
 
       <section className="mt-16">
-        <h2 className="text-xl font-black text-rcc-green">More RCC gear</h2>
+        <h2 className="text-xl font-black uppercase text-rcc-sand">More RCC gear</h2>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {related.map((p) => (
             <ProductCard key={p.slug} product={p} />
