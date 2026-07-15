@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     "racquet sports apparel",
   ],
   alternates: { canonical: "/" },
+  icons: {
+    icon: "/rcc-crest.webp",
+    shortcut: "/rcc-crest.webp",
+    apple: "/rcc-crest.webp",
+  },
   openGraph: {
     type: "website",
     siteName: storeConfig.name,

@@ -50,11 +50,9 @@ export default async function ProductPage({
         / <span className="text-rcc-sand">{product.name}</span>
       </nav>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="overflow-hidden rounded-3xl border border-rcc-line bg-rcc-panel">
-          <div className="aspect-square">
-            <ProductImage product={product} />
-          </div>
+      <div className="grid gap-8 md:grid-cols-2 md:items-start">
+        <div className="aspect-square overflow-hidden rounded-3xl border border-rcc-line bg-rcc-panel md:sticky md:top-24">
+          <ProductImage product={product} className="!object-contain p-6" />
         </div>
 
         <div className="flex flex-col">

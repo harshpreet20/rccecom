@@ -4,11 +4,14 @@ import { storeConfig } from "@/lib/config";
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="inline-flex items-center gap-3">
-      <span className="relative grid h-11 w-11 flex-none place-items-center rounded-full border-2 border-rcc-gold/70 bg-rcc-night text-rcc-gold shadow-[0_0_20px_rgba(201,162,75,0.25)]">
-        <span className="text-sm font-black leading-none tracking-tighter">
-          RCC
-        </span>
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/rcc-crest.webp"
+        alt="Racquets Club Community crest"
+        width={44}
+        height={44}
+        className="h-11 w-11 flex-none object-contain drop-shadow-[0_0_18px_rgba(201,162,75,0.28)]"
+      />
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="text-sm font-extrabold uppercase tracking-[0.14em] text-rcc-sand sm:text-base">
