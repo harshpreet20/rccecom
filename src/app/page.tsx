@@ -52,12 +52,12 @@ export default async function HomePage() {
               >
                 Shop Now →
               </Link>
-              <Link
-                href="#about"
+              <a
+                href="https://racquetsclubcommunity.com"
                 className="rounded-lg border border-rcc-line px-6 py-3 text-sm font-black uppercase tracking-wide text-rcc-sand transition hover:border-rcc-gold/50"
               >
                 Explore RCC
-              </Link>
+              </a>
             </div>
           </div>
 
