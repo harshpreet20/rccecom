@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProduct } from "@/lib/products";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { priceOrder } from "@/lib/pricing";
 import type { CartLine, OrderPayload } from "@/lib/types";
 
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
   // Persist to Supabase when configured. If it isn't (or the insert fails),
   // the order is still captured via the WhatsApp handoff on the client.
   let persisted = false;
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabase();
   if (supabase) {
     const { error } = await supabase.from("orders").insert(order);
     if (error) {

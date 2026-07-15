@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,23 +36,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = getSupabaseAdmin()!;
-  const { data, error } = await supabase
-    .from("orders")
-    .select("order_ref, status, amount, created_at, items")
-    .eq("order_ref", orderRef)
-    .eq("customer_phone", phone)
-    .maybeSingle();
+  // Secure lookup: the RPC only returns a row when BOTH the order ref and the
+  // phone match, so orders can't be enumerated with the public anon key.
+  const supabase = getSupabase()!;
+  const { data, error } = await supabase.rpc("lookup_order", {
+    p_ref: orderRef,
+    p_phone: phone,
+  });
 
   if (error) {
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
-  if (!data) {
+  const order = Array.isArray(data) ? data[0] : data;
+  if (!order) {
     return NextResponse.json(
       { error: "No order found for that ID and mobile number." },
       { status: 404 },
     );
   }
 
-  return NextResponse.json({ order: data });
+  return NextResponse.json({ order });
 }
