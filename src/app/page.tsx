@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { products, categories } from "@/lib/products";
+import { fetchProducts } from "@/lib/catalogue";
 import { storeConfig } from "@/lib/config";
 import { ProductCard } from "@/components/ProductCard";
 
-export default function HomePage() {
+// Always reflect the latest CRM-managed catalogue.
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const products = await fetchProducts();
+  const categories = Array.from(new Set(products.map((p) => p.category)));
+
   return (
     <div>
       {/* Hero */}

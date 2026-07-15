@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProduct } from "@/lib/products";
+import { fetchProduct } from "@/lib/catalogue";
 import { getSupabase } from "@/lib/supabase";
 import { priceOrder } from "@/lib/pricing";
 import type { CartLine, OrderPayload } from "@/lib/types";
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   // total. Unknown slugs are rejected.
   const validatedItems: CartLine[] = [];
   for (const raw of items as CartLine[]) {
-    const product = getProduct(String(raw.slug));
+    const product = await fetchProduct(String(raw.slug));
     if (!product) {
       return NextResponse.json(
         { error: `Unknown item: ${raw.slug}` },

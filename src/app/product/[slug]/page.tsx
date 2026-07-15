@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, products } from "@/lib/products";
+import { fetchProduct, fetchProducts } from "@/lib/catalogue";
 import { formatMoney } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { ProductImage } from "@/components/ProductImage";
 import { AddToCart } from "@/components/AddToCart";
 import { ProductCard } from "@/components/ProductCard";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
+// Reflect CRM catalogue edits without a rebuild.
+export const dynamic = "force-dynamic";
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const product = getProduct(params.slug);
+export default async function ProductPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const product = await fetchProduct(params.slug);
   if (!product) notFound();
 
-  const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
+  const all = await fetchProducts();
+  const related = all.filter((p) => p.slug !== product.slug).slice(0, 4);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

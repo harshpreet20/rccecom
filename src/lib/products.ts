@@ -28,8 +28,8 @@ export type Product = {
   description: string;
   /** Bullet highlights on the product page. */
   highlights?: string[];
-  price: number; // in whole rupees — EDIT THESE to the real RCC prices
-  category: "Jersey Kit" | "Headwear" | "Accessories";
+  price: number; // in whole rupees
+  category: string; // free-text category (managed in the RCC CRM)
   /** Optional sizes; if present the customer must pick one. */
   sizes?: string[];
   /** Optional custom fields (e.g. jersey name + number). */
