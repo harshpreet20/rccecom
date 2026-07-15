@@ -8,7 +8,11 @@
 create table if not exists public.orders (
   id                uuid primary key default gen_random_uuid(),
   order_ref         text not null unique,
-  amount            integer not null,               -- total in whole rupees
+  amount            integer not null,               -- grand total in whole rupees
+  subtotal          integer not null default 0,     -- items subtotal
+  tax_amount        integer not null default 0,     -- GST amount
+  tax_rate_pct      integer not null default 0,     -- GST rate applied (%)
+  shipping_amount   integer not null default 0,     -- flat shipping fee
   currency          text not null default 'INR',
   status            text not null default 'awaiting_confirmation',
   items             jsonb not null,                 -- array of ordered line items

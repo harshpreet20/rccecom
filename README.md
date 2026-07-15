@@ -50,7 +50,13 @@ All merchant/payment settings are environment variables (see `.env.example`):
 | `NEXT_PUBLIC_UPI_PAYEE_NAME` | Name shown in the payer's UPI app |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Number orders are sent to (country code + digits) |
 | `NEXT_PUBLIC_STORE_*` | Store name, tagline, support email |
+| `NEXT_PUBLIC_SHIPPING_FEE` | Flat shipping fee in ₹ added per order (`0` = free) |
+| `NEXT_PUBLIC_GST_PERCENT` | GST % applied to the item subtotal |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Order persistence (server-side only) |
+
+Shipping and GST are added on top of item prices at checkout, itemised in the
+order summary, and folded into the exact amount the UPI QR charges — computed
+server-side so the persisted total always matches what the customer paid.
 
 > `NEXT_PUBLIC_*` values are exposed to the browser (needed to render the QR).
 > The Supabase **service-role key** is server-only — never prefix it with

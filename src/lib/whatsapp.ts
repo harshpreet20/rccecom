@@ -18,6 +18,12 @@ export function buildWhatsappOrderUrl(order: OrderPayload): string {
     if (custom) lines.push(`   ↳ ${custom}`);
   }
   lines.push("");
+  lines.push(`Subtotal: ${formatMoney(order.subtotal)}`);
+  if (order.tax > 0)
+    lines.push(`GST (${order.taxRatePct}%): ${formatMoney(order.tax)}`);
+  lines.push(
+    `Shipping: ${order.shipping > 0 ? formatMoney(order.shipping) : "Free"}`,
+  );
   lines.push(`*Total: ${formatMoney(order.amount)}*`);
   if (order.upiTxnRef) lines.push(`UPI Ref / UTR: ${order.upiTxnRef}`);
   lines.push("");

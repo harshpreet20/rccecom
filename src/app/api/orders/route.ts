@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProduct } from "@/lib/products";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { priceOrder } from "@/lib/pricing";
 import type { CartLine, OrderPayload } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -47,7 +48,6 @@ export async function POST(request: Request) {
   // Re-price every line against the server catalogue — never trust the client
   // total. Unknown slugs are rejected.
   const validatedItems: CartLine[] = [];
-  let amount = 0;
   for (const raw of items as CartLine[]) {
     const product = getProduct(String(raw.slug));
     if (!product) {
@@ -86,12 +86,20 @@ export async function POST(request: Request) {
       emoji: product.emoji,
       accent: product.accent,
     });
-    amount += product.price * qty;
   }
+
+  // Authoritative totals — shipping fee + GST come from server config, never
+  // the client, so the persisted amount matches the QR the customer was shown.
+  const { subtotal, tax, taxRatePct, shipping, total } =
+    priceOrder(validatedItems);
 
   const order = {
     order_ref: orderRef,
-    amount,
+    amount: total,
+    subtotal,
+    tax_amount: tax,
+    tax_rate_pct: taxRatePct,
+    shipping_amount: shipping,
     currency: "INR",
     status: "awaiting_confirmation" as const,
     items: validatedItems,
@@ -119,7 +127,10 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     orderRef,
-    amount,
+    amount: total,
+    subtotal,
+    tax,
+    shipping,
     persisted,
   });
 }

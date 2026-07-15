@@ -23,6 +23,11 @@ export type CustomerDetails = {
 export type OrderPayload = {
   orderRef: string;
   items: CartLine[];
+  subtotal: number;
+  tax: number;
+  taxRatePct: number;
+  shipping: number;
+  /** Grand total (subtotal + tax + shipping) — the amount the QR charges. */
   amount: number;
   customer: CustomerDetails;
   /** UPI transaction / reference number the customer entered after paying. */

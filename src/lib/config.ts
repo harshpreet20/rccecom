@@ -17,6 +17,15 @@ export const storeConfig = {
   currency: "INR",
   currencySymbol: "₹",
 
+  /**
+   * Flat shipping fee (₹) added per order. Kept dynamic via env so RCC can
+   * change it any time (set NEXT_PUBLIC_SHIPPING_FEE, or 0 for free shipping).
+   */
+  shippingFee: Number(process.env.NEXT_PUBLIC_SHIPPING_FEE ?? "80") || 0,
+
+  /** GST rate (%) applied to the item subtotal. Set NEXT_PUBLIC_GST_PERCENT. */
+  taxRatePct: Number(process.env.NEXT_PUBLIC_GST_PERCENT ?? "5") || 0,
+
   /** UPI Virtual Payment Address the QR pays into (e.g. 9650086006@ybl). */
   upiId: process.env.NEXT_PUBLIC_UPI_ID || "9650086006@ybl",
   /** Name shown to the payer inside their UPI app. */

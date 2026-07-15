@@ -6,6 +6,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatMoney, describeCustom } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { generateOrderRef } from "@/lib/upi";
+import { priceOrder, type PriceBreakdown } from "@/lib/pricing";
 import { buildWhatsappOrderUrl } from "@/lib/whatsapp";
 import { UpiQr } from "@/components/UpiQr";
 import type { CustomerDetails, OrderPayload } from "@/lib/types";
@@ -13,7 +14,8 @@ import type { CustomerDetails, OrderPayload } from "@/lib/types";
 type Step = "details" | "pay" | "done";
 
 export default function CheckoutPage() {
-  const { lines, subtotal, clear } = useCart();
+  const { lines, clear } = useCart();
+  const pricing = priceOrder(lines);
   const [step, setStep] = useState<Step>("details");
   const [orderRef] = useState(generateOrderRef);
   const [customer, setCustomer] = useState<CustomerDetails>({
@@ -86,7 +88,11 @@ export default function CheckoutPage() {
     const payload: OrderPayload = {
       orderRef,
       items: lines,
-      amount: subtotal,
+      subtotal: pricing.subtotal,
+      tax: pricing.tax,
+      taxRatePct: pricing.taxRatePct,
+      shipping: pricing.shipping,
+      amount: pricing.total,
       customer,
       upiTxnRef: upiTxnRef.trim(),
     };
@@ -134,7 +140,7 @@ export default function CheckoutPage() {
 
             {step === "pay" && (
               <div className="grid gap-6 sm:grid-cols-2">
-                <UpiQr amount={subtotal} note={note} orderRef={orderRef} />
+                <UpiQr amount={pricing.total} note={note} orderRef={orderRef} />
                 <div className="rounded-2xl border border-rcc-green/10 bg-white p-5">
                   <h3 className="font-bold text-rcc-green">
                     After you&apos;ve paid
@@ -175,7 +181,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          <OrderSummary lines={lines} subtotal={subtotal} />
+          <OrderSummary lines={lines} pricing={pricing} />
         </div>
       )}
     </div>
@@ -313,10 +319,10 @@ function DetailsForm({
 
 function OrderSummary({
   lines,
-  subtotal,
+  pricing,
 }: {
   lines: OrderPayload["items"];
-  subtotal: number;
+  pricing: PriceBreakdown;
 }) {
   return (
     <aside className="h-fit rounded-2xl border border-rcc-green/10 bg-white p-5 lg:sticky lg:top-20">
@@ -358,15 +364,23 @@ function OrderSummary({
       <div className="mt-3 space-y-1 border-t border-rcc-green/10 pt-3 text-sm">
         <div className="flex justify-between text-rcc-green/60">
           <span>Subtotal</span>
-          <span>{formatMoney(subtotal)}</span>
+          <span>{formatMoney(pricing.subtotal)}</span>
         </div>
+        {pricing.tax > 0 && (
+          <div className="flex justify-between text-rcc-green/60">
+            <span>GST ({pricing.taxRatePct}%)</span>
+            <span>{formatMoney(pricing.tax)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-rcc-green/60">
-          <span>Delivery</span>
-          <span>Arranged on WhatsApp</span>
+          <span>Shipping</span>
+          <span>
+            {pricing.shipping > 0 ? formatMoney(pricing.shipping) : "Free"}
+          </span>
         </div>
         <div className="flex justify-between pt-1 text-lg font-black text-rcc-green">
           <span>Total</span>
-          <span>{formatMoney(subtotal)}</span>
+          <span>{formatMoney(pricing.total)}</span>
         </div>
       </div>
     </aside>

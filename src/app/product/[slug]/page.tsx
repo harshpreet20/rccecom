@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, products } from "@/lib/products";
 import { formatMoney } from "@/lib/format";
+import { storeConfig } from "@/lib/config";
 import { ProductImage } from "@/components/ProductImage";
 import { AddToCart } from "@/components/AddToCart";
 import { ProductCard } from "@/components/ProductCard";
@@ -45,7 +46,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             {formatMoney(product.price)}
           </p>
           <p className="text-xs text-rcc-green/50">
-            Inclusive of all taxes · Pay via UPI at checkout
+            + {storeConfig.taxRatePct}% GST &amp; shipping · pay via UPI at
+            checkout
           </p>
 
           <div className="mt-6 max-w-sm">

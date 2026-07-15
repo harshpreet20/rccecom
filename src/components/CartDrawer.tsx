@@ -127,7 +127,8 @@ export function CartDrawer() {
                 </span>
               </div>
               <p className="mt-1 text-xs text-rcc-green/50">
-                Pay via UPI QR on the next step. Delivery arranged over WhatsApp.
+                {storeConfig.taxRatePct}% GST &amp; shipping added at checkout.
+                Pay via UPI QR on the next step.
               </p>
               <Link
                 href="/checkout"

@@ -58,7 +58,7 @@ export const products: Product[] = [
       "Add your name & number on the back",
       "Breathable performance fabric",
     ],
-    price: 1499, // TODO: confirm real price
+    price: 1100,
     category: "Jersey Kit",
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
     personalization: [
@@ -93,7 +93,7 @@ export const products: Product[] = [
       "Adjustable brass strap",
       "One size fits most",
     ],
-    price: 549, // TODO: confirm real price
+    price: 450,
     category: "Headwear",
     accent: "#31a89f",
     emoji: "🧢",
@@ -111,7 +111,7 @@ export const products: Product[] = [
       "Embroidered RCC crest + wordmark",
       "One size, stretch fit",
     ],
-    price: 349, // TODO: confirm real price
+    price: 250,
     category: "Accessories",
     accent: "#0e5a62",
     emoji: "🎾",
