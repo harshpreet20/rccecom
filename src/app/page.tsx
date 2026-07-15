@@ -15,16 +15,21 @@ const FEATURES = [
 
 export default async function HomePage() {
   const products = await fetchProducts();
-  const showcase = products.slice(0, 4);
 
   return (
     <div>
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-rcc-line bg-rcc-night">
-        <div className="spotlight absolute inset-0" aria-hidden />
-        <div className="court-lines absolute inset-0 opacity-30" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:py-20 lg:grid-cols-[1.1fr_1fr]">
-          <div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero.png"
+          alt="RCC performance kit — jersey, shorts, cap and wristbands"
+          className="absolute inset-0 h-full w-full object-cover object-right opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-rcc-night via-rcc-night/90 to-rcc-night/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-rcc-night via-transparent to-rcc-night/40" />
+        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
+          <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-rcc-gold/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-rcc-gold">
               🏸 Official Club Store
             </span>
@@ -56,41 +61,22 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Showcase + feature list */}
-          <div className="flex items-center gap-6">
-            <div className="relative flex-1">
-              <div className="grid grid-cols-2 gap-3">
-                {showcase.map((p, i) => (
-                  <Link
-                    key={p.slug}
-                    href={`/product/${p.slug}`}
-                    className="flex aspect-square items-center justify-center rounded-2xl border border-rcc-line text-5xl shadow-lg transition hover:border-rcc-gold/40"
-                    style={{
-                      background: `radial-gradient(120% 120% at 30% 20%, ${p.accent}, #060b0a)`,
-                      transform: `translateY(${i % 2 ? "1rem" : "0"})`,
-                    }}
-                  >
-                    <span aria-hidden>{p.emoji}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <ul className="hidden w-44 flex-none space-y-4 md:block">
-              {FEATURES.map((f) => (
-                <li key={f.title} className="flex gap-2.5">
-                  <span className="text-lg text-rcc-gold" aria-hidden>
-                    {f.icon}
-                  </span>
-                  <span>
-                    <span className="block text-xs font-bold uppercase tracking-wide text-rcc-sand">
-                      {f.title}
-                    </span>
-                    <span className="block text-[11px] text-rcc-mist">{f.text}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="mt-12 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+            {FEATURES.map((f) => (
+              <li
+                key={f.title}
+                className="rounded-xl border border-rcc-line/70 bg-rcc-night/50 p-3 backdrop-blur"
+              >
+                <span className="text-lg text-rcc-gold" aria-hidden>
+                  {f.icon}
+                </span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-wide text-rcc-sand">
+                  {f.title}
+                </span>
+                <span className="block text-[11px] text-rcc-mist">{f.text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Policy bar */}
