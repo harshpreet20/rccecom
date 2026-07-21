@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { formatMoney, describeCustom } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { generateOrderRef } from "@/lib/upi";
-import { priceOrder, type PriceBreakdown } from "@/lib/pricing";
+import { priceOrder, type AppliedDiscount, type PriceBreakdown } from "@/lib/pricing";
+import type { StoreSettings } from "@/lib/store-settings";
 import { buildWhatsappOrderUrl } from "@/lib/whatsapp";
 import { UpiQr } from "@/components/UpiQr";
 import type { CustomerDetails, OrderPayload } from "@/lib/types";
@@ -15,7 +16,50 @@ type Step = "details" | "pay" | "done";
 
 export default function CheckoutPage() {
   const { lines, clear } = useCart();
-  const pricing = priceOrder(lines);
+  const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
+  const [discountInput, setDiscountInput] = useState("");
+  const [discountStatus, setDiscountStatus] = useState<"idle" | "checking" | "applied" | "invalid">("idle");
+
+  useEffect(() => {
+    fetch("/api/store-settings")
+      .then((r) => r.json())
+      .then((json) => setSettings(json.settings || null))
+      .catch(() => setSettings(null));
+  }, []);
+
+  const pricing = priceOrder(lines, { settings: settings ?? undefined, discount });
+
+  async function applyDiscount() {
+    if (!discountInput.trim()) return;
+    setDiscountStatus("checking");
+    try {
+      const subtotal = lines.reduce((n, l) => n + l.price * l.qty, 0);
+      const res = await fetch("/api/discounts/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: discountInput.trim(), orderAmount: subtotal }),
+      });
+      const json = await res.json();
+      if (json.valid && json.type && json.value != null) {
+        setDiscount({ code: json.code || discountInput.trim().toUpperCase(), type: json.type, value: json.value });
+        setDiscountStatus("applied");
+      } else {
+        setDiscount(null);
+        setDiscountStatus("invalid");
+      }
+    } catch {
+      setDiscount(null);
+      setDiscountStatus("invalid");
+    }
+  }
+
+  function removeDiscount() {
+    setDiscount(null);
+    setDiscountInput("");
+    setDiscountStatus("idle");
+  }
+
   const [step, setStep] = useState<Step>("details");
   const [orderRef] = useState(generateOrderRef);
   const [customer, setCustomer] = useState<CustomerDetails>({
@@ -92,11 +136,14 @@ export default function CheckoutPage() {
       tax: pricing.tax,
       taxRatePct: pricing.taxRatePct,
       shipping: pricing.shipping,
+      discount: pricing.discount,
+      discountCode: pricing.discountCode,
       amount: pricing.total,
       customer,
       upiTxnRef: upiTxnRef.trim(),
     };
 
+    let finalOrder = payload;
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -105,12 +152,26 @@ export default function CheckoutPage() {
       });
       const data = await res.json().catch(() => ({}));
       setSaveState(data?.persisted ? "saved" : "local");
+      // The server re-validates the discount and may adjust totals (e.g. the
+      // code got used up between applying it and paying) -- reflect that in
+      // what we show/send to WhatsApp.
+      if (data?.ok) {
+        finalOrder = {
+          ...payload,
+          subtotal: data.subtotal ?? payload.subtotal,
+          tax: data.tax ?? payload.tax,
+          shipping: data.shipping ?? payload.shipping,
+          discount: data.discount ?? payload.discount,
+          discountCode: data.discountCode ?? payload.discountCode,
+          amount: data.amount ?? payload.amount,
+        };
+      }
     } catch {
       // Order still captured via the WhatsApp handoff below.
       setSaveState("local");
     }
 
-    setPlacedOrder(payload);
+    setPlacedOrder(finalOrder);
     setStep("done");
     clear();
     setSubmitting(false);
@@ -181,7 +242,16 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          <OrderSummary lines={lines} pricing={pricing} />
+          <OrderSummary
+            lines={lines}
+            pricing={pricing}
+            discount={discount}
+            discountInput={discountInput}
+            discountStatus={discountStatus}
+            onDiscountInputChange={setDiscountInput}
+            onApplyDiscount={applyDiscount}
+            onRemoveDiscount={removeDiscount}
+          />
         </div>
       )}
     </div>
@@ -320,9 +390,21 @@ function DetailsForm({
 function OrderSummary({
   lines,
   pricing,
+  discount,
+  discountInput,
+  discountStatus,
+  onDiscountInputChange,
+  onApplyDiscount,
+  onRemoveDiscount,
 }: {
   lines: OrderPayload["items"];
   pricing: PriceBreakdown;
+  discount?: AppliedDiscount | null;
+  discountInput?: string;
+  discountStatus?: "idle" | "checking" | "applied" | "invalid";
+  onDiscountInputChange?: (v: string) => void;
+  onApplyDiscount?: () => void;
+  onRemoveDiscount?: () => void;
 }) {
   return (
     <aside className="h-fit rounded-2xl border border-rcc-line bg-rcc-panel p-5 lg:sticky lg:top-20">
@@ -361,6 +443,42 @@ function OrderSummary({
           </li>
         ))}
       </ul>
+      <div className="mt-4 border-t border-rcc-line pt-3">
+        {discount ? (
+          <div className="flex items-center justify-between rounded-lg bg-rcc-leaf/10 px-3 py-2 text-sm">
+            <span className="font-bold text-rcc-leaf">
+              {discount.code} applied
+            </span>
+            {onRemoveDiscount && (
+              <button onClick={onRemoveDiscount} className="text-xs font-semibold text-rcc-mist hover:text-rcc-clay">
+                Remove
+              </button>
+            )}
+          </div>
+        ) : onApplyDiscount ? (
+          <div>
+            <div className="flex gap-2">
+              <input
+                value={discountInput}
+                onChange={(e) => onDiscountInputChange?.(e.target.value)}
+                placeholder="Discount code"
+                className="min-w-0 flex-1 rounded-lg border border-rcc-line bg-rcc-panel2 px-3 py-2 text-sm uppercase text-rcc-sand outline-none focus:border-rcc-leaf"
+              />
+              <button
+                onClick={onApplyDiscount}
+                disabled={discountStatus === "checking"}
+                className="shrink-0 rounded-lg border border-rcc-line px-3 py-2 text-sm font-bold text-rcc-sand hover:border-rcc-leaf disabled:opacity-60"
+              >
+                {discountStatus === "checking" ? "…" : "Apply"}
+              </button>
+            </div>
+            {discountStatus === "invalid" && (
+              <p className="mt-1 text-xs font-semibold text-rcc-clay">Invalid or expired code.</p>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="mt-3 space-y-1 border-t border-rcc-line pt-3 text-sm">
         <div className="flex justify-between text-rcc-mist">
           <span>Subtotal</span>
@@ -378,6 +496,12 @@ function OrderSummary({
             {pricing.shipping > 0 ? formatMoney(pricing.shipping) : "Free"}
           </span>
         </div>
+        {pricing.discount > 0 && (
+          <div className="flex justify-between text-rcc-leaf">
+            <span>Discount</span>
+            <span>-{formatMoney(pricing.discount)}</span>
+          </div>
+        )}
         <div className="flex justify-between pt-1 text-lg font-black text-rcc-sand">
           <span>Total</span>
           <span>{formatMoney(pricing.total)}</span>

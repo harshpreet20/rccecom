@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { fetchProducts } from "@/lib/catalogue";
+import { fetchCategories } from "@/lib/categories";
+import { fetchStoreSettings } from "@/lib/store-settings";
+import { formatMoney } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { STORE_FAQS, faqJsonLd } from "@/lib/seo";
-import { ProductCard } from "@/components/ProductCard";
+import { CategoryFilterGrid } from "@/components/CategoryFilterGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +17,11 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  const products = await fetchProducts();
+  const [products, categories, settings] = await Promise.all([
+    fetchProducts(),
+    fetchCategories(),
+    fetchStoreSettings(),
+  ]);
 
   return (
     <div>
@@ -85,8 +92,21 @@ export default async function HomePage() {
             <div className="flex items-center gap-3 text-rcc-mist">
               <span className="text-rcc-gold" aria-hidden>🚚</span>
               <span>
-                <b className="text-rcc-sand">Free shipping not available.</b> We
-                currently do not offer free shipping.
+                {settings.freeShippingThreshold != null ? (
+                  <>
+                    <b className="text-rcc-sand">
+                      Free shipping over {formatMoney(settings.freeShippingThreshold)}.
+                    </b>{" "}
+                    Flat {formatMoney(settings.shippingFee)} shipping below that.
+                  </>
+                ) : (
+                  <>
+                    <b className="text-rcc-sand">
+                      Flat {formatMoney(settings.shippingFee)} shipping.
+                    </b>{" "}
+                    Added at checkout.
+                  </>
+                )}
               </span>
             </div>
             <div className="flex items-center gap-3 text-rcc-mist sm:justify-center">
@@ -113,11 +133,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((p) => (
-            <ProductCard key={p.slug} product={p} />
-          ))}
-        </div>
+        <CategoryFilterGrid products={products} categories={categories} />
       </section>
 
       {/* CUSTOMIZE CTA */}
