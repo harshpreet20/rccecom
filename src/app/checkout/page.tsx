@@ -151,6 +151,26 @@ export default function CheckoutPage() {
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // The discount became invalid between being applied and paying --
+        // the QR the customer already paid was for a total that included
+        // it, so don't silently record/demand a higher amount. Surface the
+        // error and let them retry without the code.
+        if (data?.error === "discount_invalid") {
+          setDiscount(null);
+          setDiscountInput("");
+          setDiscountStatus("invalid");
+          setErrors({
+            upi: data.message || "This discount code is no longer valid. Please remove it and try again.",
+          });
+        } else {
+          setErrors({ upi: data?.message || "Something went wrong placing the order. Please try again." });
+        }
+        setSubmitting(false);
+        return;
+      }
+
       setSaveState(data?.persisted ? "saved" : "local");
       // The server re-validates the discount and may adjust totals (e.g. the
       // code got used up between applying it and paying) -- reflect that in

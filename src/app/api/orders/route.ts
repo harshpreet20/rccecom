@@ -103,9 +103,20 @@ export async function POST(request: Request) {
     const check = await checkDiscountCode(requestedCode, rawSubtotal);
     if (check.valid && check.type && check.value != null) {
       appliedDiscount = { code: check.code || requestedCode, type: check.type, value: check.value };
+    } else {
+      // The code became invalid (expired/used/etc.) between being shown to
+      // the customer and this request. The UPI QR they already paid was for
+      // a total that included this discount -- silently repricing higher
+      // here would record/demand more than they actually paid, so reject
+      // instead of proceeding without the discount.
+      return NextResponse.json(
+        {
+          error: "discount_invalid",
+          message: "This discount code is no longer valid. Please remove it and try again.",
+        },
+        { status: 409 },
+      );
     }
-    // If the code is no longer valid (expired/used/etc. since it was shown to
-    // the customer), the order still proceeds -- just without the discount.
   }
 
   const { subtotal, tax, taxRatePct, shipping, discount, discountCode, total } =
