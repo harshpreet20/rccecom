@@ -58,6 +58,15 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    // Re-check availability at order time too, not just in the UI -- the
+    // customer's cart may predate the item going out of stock (CRM edit
+    // between add-to-cart and checkout, or a direct API call).
+    if (product.soldOut) {
+      return NextResponse.json(
+        { error: "sold_out", message: `${product.name} is no longer available.` },
+        { status: 409 },
+      );
+    }
     const qty = Math.max(1, Math.min(50, Math.floor(Number(raw.qty) || 1)));
     const size =
       product.sizes && raw.size && product.sizes.includes(String(raw.size))
