@@ -29,7 +29,9 @@ export type OrderPayload = {
   tax: number;
   taxRatePct: number;
   shipping: number;
-  /** Grand total (subtotal + tax + shipping) — the amount the QR charges. */
+  discount?: number;
+  discountCode?: string | null;
+  /** Grand total (subtotal + tax + shipping - discount) — the amount the QR charges. */
   amount: number;
   customer: CustomerDetails;
   /** UPI transaction / reference number the customer entered after paying. */

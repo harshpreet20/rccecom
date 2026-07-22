@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { fetchProduct } from "@/lib/catalogue";
 import { getSupabase } from "@/lib/supabase";
 import { priceOrder } from "@/lib/pricing";
+import { fetchStoreSettings } from "@/lib/store-settings";
+import { checkDiscountCode, consumeDiscountCode } from "@/lib/discounts";
 import type { CartLine, OrderPayload } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid order" }, { status: 400 });
   }
 
-  const { orderRef, items, customer, upiTxnRef } = body;
+  const { orderRef, items, customer, upiTxnRef, discountCode: requestedCode } = body;
 
   // Basic customer validation.
   const name = String(customer.name || "").trim();
@@ -89,10 +91,36 @@ export async function POST(request: Request) {
     });
   }
 
-  // Authoritative totals — shipping fee + GST come from server config, never
-  // the client, so the persisted amount matches the QR the customer was shown.
-  const { subtotal, tax, taxRatePct, shipping, total } =
-    priceOrder(validatedItems);
+  // Authoritative totals — shipping/tax settings and the discount code come
+  // from the server (CRM-managed store_settings + discounts tables), never
+  // trusting whatever the client displayed, so the persisted amount matches
+  // the QR the customer was shown.
+  const settings = await fetchStoreSettings();
+  const rawSubtotal = validatedItems.reduce((n, l) => n + l.price * l.qty, 0);
+
+  let appliedDiscount: { code: string; type: "percent" | "flat"; value: number } | null = null;
+  if (requestedCode) {
+    const check = await checkDiscountCode(requestedCode, rawSubtotal);
+    if (check.valid && check.type && check.value != null) {
+      appliedDiscount = { code: check.code || requestedCode, type: check.type, value: check.value };
+    } else {
+      // The code became invalid (expired/used/etc.) between being shown to
+      // the customer and this request. The UPI QR they already paid was for
+      // a total that included this discount -- silently repricing higher
+      // here would record/demand more than they actually paid, so reject
+      // instead of proceeding without the discount.
+      return NextResponse.json(
+        {
+          error: "discount_invalid",
+          message: "This discount code is no longer valid. Please remove it and try again.",
+        },
+        { status: 409 },
+      );
+    }
+  }
+
+  const { subtotal, tax, taxRatePct, shipping, discount, discountCode, total } =
+    priceOrder(validatedItems, { settings, discount: appliedDiscount });
 
   const order = {
     order_ref: orderRef,
@@ -101,6 +129,8 @@ export async function POST(request: Request) {
     tax_amount: tax,
     tax_rate_pct: taxRatePct,
     shipping_amount: shipping,
+    discount_amount: discount,
+    discount_code: discountCode,
     currency: "INR",
     status: "awaiting_confirmation" as const,
     items: validatedItems,
@@ -122,6 +152,7 @@ export async function POST(request: Request) {
       console.error("[orders] Supabase insert failed:", error.message);
     } else {
       persisted = true;
+      if (appliedDiscount) await consumeDiscountCode(appliedDiscount.code);
     }
   }
 
@@ -132,6 +163,8 @@ export async function POST(request: Request) {
     subtotal,
     tax,
     shipping,
+    discount,
+    discountCode,
     persisted,
   });
 }

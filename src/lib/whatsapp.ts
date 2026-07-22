@@ -24,6 +24,8 @@ export function buildWhatsappOrderUrl(order: OrderPayload): string {
   lines.push(
     `Shipping: ${order.shipping > 0 ? formatMoney(order.shipping) : "Free"}`,
   );
+  if (order.discount && order.discount > 0)
+    lines.push(`Discount (${order.discountCode}): -${formatMoney(order.discount)}`);
   lines.push(`*Total: ${formatMoney(order.amount)}*`);
   if (order.upiTxnRef) lines.push(`UPI Ref / UTR: ${order.upiTxnRef}`);
   lines.push("");
