@@ -49,7 +49,16 @@ export async function POST(request: Request) {
 
   // Re-price every line against the server catalogue — never trust the client
   // total. Unknown slugs are rejected.
+  //
+  // Stock is checked too, but never rejected: by the time this endpoint is
+  // called the customer has already been shown the UPI QR and (per the
+  // checkout flow) has already paid outside our system before clicking
+  // "I've paid". Refusing to record the order here would strand a payment
+  // we have no other record of and skip the WhatsApp handoff entirely, so
+  // an oversold/sold-out line is flagged in the order's notes for staff to
+  // resolve manually (refund or backorder) instead of blocking checkout.
   const validatedItems: CartLine[] = [];
+  const stockConflicts: string[] = [];
   for (const raw of items as CartLine[]) {
     const product = await fetchProduct(String(raw.slug));
     if (!product) {
@@ -58,16 +67,12 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    // Re-check availability at order time too, not just in the UI -- the
-    // customer's cart may predate the item going out of stock (CRM edit
-    // between add-to-cart and checkout, or a direct API call).
-    if (product.soldOut) {
-      return NextResponse.json(
-        { error: "sold_out", message: `${product.name} is no longer available.` },
-        { status: 409 },
-      );
-    }
     const qty = Math.max(1, Math.min(50, Math.floor(Number(raw.qty) || 1)));
+    if (product.soldOut) {
+      stockConflicts.push(`${product.name}: sold out`);
+    } else if (product.stock != null && qty > product.stock) {
+      stockConflicts.push(`${product.name}: ordered ${qty}, only ${product.stock} in stock`);
+    }
     const size =
       product.sizes && raw.size && product.sizes.includes(String(raw.size))
         ? String(raw.size)
@@ -147,7 +152,13 @@ export async function POST(request: Request) {
     customer_phone: phone,
     customer_email: String(customer.email || "").trim() || null,
     customer_address: address,
-    notes: String(customer.notes || "").trim() || null,
+    notes:
+      [
+        stockConflicts.length ? `⚠ STOCK CONFLICT — ${stockConflicts.join("; ")}` : null,
+        String(customer.notes || "").trim() || null,
+      ]
+        .filter(Boolean)
+        .join(" | ") || null,
     upi_txn_ref: upiTxnRef ? String(upiTxnRef).trim() : null,
   };
 
