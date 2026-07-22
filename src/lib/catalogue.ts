@@ -22,6 +22,9 @@ type Row = {
   accent: string | null;
   emoji: string | null;
   image: string | null;
+  images: string[] | null;
+  videos: string[] | null;
+  stock: number | null;
   sold_out: boolean | null;
   badge: string | null;
   seo_title: string | null;
@@ -30,9 +33,11 @@ type Row = {
   kind: string | null;
   amazon_url: string | null;
   flipkart_url: string | null;
+  size_chart_slugs: string[] | null;
 };
 
 function mapRow(r: Row): Product {
+  const images = r.images?.length ? r.images : undefined;
   return {
     slug: r.slug,
     name: r.name,
@@ -45,8 +50,15 @@ function mapRow(r: Row): Product {
     personalization: r.personalization?.length ? r.personalization : undefined,
     accent: r.accent ?? "#0e5a62",
     emoji: r.emoji ?? "🎾",
-    image: r.image ?? undefined,
-    soldOut: r.sold_out ?? false,
+    // images[0] is the CRM's cover photo; fall back to the legacy single
+    // `image` column for rows saved before the gallery existed.
+    image: images?.[0] ?? r.image ?? undefined,
+    images,
+    videos: r.videos?.length ? r.videos : undefined,
+    stock: r.stock,
+    // A tracked, exhausted stock count means "unavailable" even if staff
+    // never flipped the separate sold_out toggle.
+    soldOut: (r.sold_out ?? false) || (r.stock != null && r.stock <= 0),
     badge: r.badge ?? undefined,
     kind: r.kind === "membership" ? "membership" : "physical",
     amazonUrl: r.amazon_url ?? undefined,
@@ -54,6 +66,7 @@ function mapRow(r: Row): Product {
     seoTitle: r.seo_title ?? undefined,
     seoDescription: r.seo_description ?? undefined,
     seoKeywords: r.seo_keywords?.length ? r.seo_keywords : undefined,
+    sizeChartSlugs: r.size_chart_slugs?.length ? r.size_chart_slugs : undefined,
   };
 }
 

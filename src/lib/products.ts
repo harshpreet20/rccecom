@@ -38,9 +38,17 @@ export type Product = {
   accent: string;
   /** Emoji used in the placeholder image. */
   emoji: string;
-  /** Optional external/local image URL (overrides the placeholder). */
+  /** Optional external/local image URL (overrides the placeholder). Mirrors images[0] when a gallery is set. */
   image?: string;
+  /** Full photo gallery (managed in the RCC CRM). */
+  images?: string[];
+  /** Product videos (managed in the RCC CRM). */
+  videos?: string[];
+  /** Units on hand (managed in the RCC CRM). null/undefined = untracked (always available). */
+  stock?: number | null;
   soldOut?: boolean;
+  /** Size chart slugs to show on the product page (managed in the RCC CRM). */
+  sizeChartSlugs?: string[];
   badge?: string;
   /** "physical" goods vs "membership" (no shipping, no size). */
   kind?: "physical" | "membership";

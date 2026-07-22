@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchProduct, fetchProducts } from "@/lib/catalogue";
+import { fetchSizeCharts } from "@/lib/size-charts";
 import { formatMoney } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { productMetadata, productJsonLd } from "@/lib/seo";
-import { ProductImage } from "@/components/ProductImage";
+import { ProductGallery } from "@/components/ProductGallery";
 import { AddToCart } from "@/components/AddToCart";
 import { ProductCard } from "@/components/ProductCard";
 import { SizeChart } from "@/components/SizeChart";
@@ -31,7 +32,8 @@ export default async function ProductPage({
   const product = await fetchProduct(params.slug);
   if (!product) notFound();
 
-  const isJerseyKit = /jersey/i.test(product.category) || /jersey/i.test(product.name);
+  const allCharts = product.sizeChartSlugs?.length ? await fetchSizeCharts() : [];
+  const productCharts = allCharts.filter((c) => product.sizeChartSlugs?.includes(c.slug));
 
   const all = await fetchProducts();
   const related = all.filter((p) => p.slug !== product.slug).slice(0, 4);
@@ -51,8 +53,8 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 md:grid-cols-2 md:items-start">
-        <div className="aspect-square overflow-hidden rounded-3xl border border-rcc-line bg-rcc-panel md:sticky md:top-24">
-          <ProductImage product={product} className="!object-contain p-6" />
+        <div className="rounded-3xl border border-rcc-line bg-rcc-panel p-3 md:sticky md:top-24">
+          <ProductGallery product={product} className="aspect-square rounded-2xl bg-rcc-night/40" />
         </div>
 
         <div className="flex flex-col">
@@ -79,9 +81,9 @@ export default async function ProductPage({
             <AddToCart product={product} />
           </div>
 
-          {product.sizes && (
+          {product.sizes && productCharts.length > 0 && (
             <div className="mt-3">
-              <SizeChart withShorts={isJerseyKit} />
+              <SizeChart charts={productCharts} />
             </div>
           )}
 
