@@ -47,6 +47,8 @@ export type Product = {
   /** Units on hand (managed in the RCC CRM). null/undefined = untracked (always available). */
   stock?: number | null;
   soldOut?: boolean;
+  /** Size chart slugs to show on the product page (managed in the RCC CRM). */
+  sizeChartSlugs?: string[];
   badge?: string;
   /** "physical" goods vs "membership" (no shipping, no size). */
   kind?: "physical" | "membership";

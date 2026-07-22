@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchProduct, fetchProducts } from "@/lib/catalogue";
+import { fetchSizeCharts } from "@/lib/size-charts";
 import { formatMoney } from "@/lib/format";
 import { storeConfig } from "@/lib/config";
 import { productMetadata, productJsonLd } from "@/lib/seo";
@@ -31,7 +32,8 @@ export default async function ProductPage({
   const product = await fetchProduct(params.slug);
   if (!product) notFound();
 
-  const isJerseyKit = /jersey/i.test(product.category) || /jersey/i.test(product.name);
+  const allCharts = product.sizeChartSlugs?.length ? await fetchSizeCharts() : [];
+  const productCharts = allCharts.filter((c) => product.sizeChartSlugs?.includes(c.slug));
 
   const all = await fetchProducts();
   const related = all.filter((p) => p.slug !== product.slug).slice(0, 4);
@@ -79,9 +81,9 @@ export default async function ProductPage({
             <AddToCart product={product} />
           </div>
 
-          {product.sizes && (
+          {product.sizes && productCharts.length > 0 && (
             <div className="mt-3">
-              <SizeChart withShorts={isJerseyKit} />
+              <SizeChart charts={productCharts} />
             </div>
           )}
 

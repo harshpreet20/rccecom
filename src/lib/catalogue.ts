@@ -33,6 +33,7 @@ type Row = {
   kind: string | null;
   amazon_url: string | null;
   flipkart_url: string | null;
+  size_chart_slugs: string[] | null;
 };
 
 function mapRow(r: Row): Product {
@@ -65,6 +66,7 @@ function mapRow(r: Row): Product {
     seoTitle: r.seo_title ?? undefined,
     seoDescription: r.seo_description ?? undefined,
     seoKeywords: r.seo_keywords?.length ? r.seo_keywords : undefined,
+    sizeChartSlugs: r.size_chart_slugs?.length ? r.size_chart_slugs : undefined,
   };
 }
 

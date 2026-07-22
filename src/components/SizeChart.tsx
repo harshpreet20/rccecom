@@ -1,64 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import type { SizeChartData } from "@/lib/size-charts";
 
-/**
- * Size charts for the RCC apparel, in inches (EIGHTX ready-garment sizing).
- * The RCC Pro Jersey is a half-sleeve kit, so we show the half-sleeve jersey
- * measurements plus the matching shorts chart. Tolerance ≈ ±0.5 inch.
- */
-
-const JERSEY_SIZES = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
-const JERSEY_NOMINAL = [32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
-const JERSEY_ROWS: { label: string; values: (number | string)[] }[] = [
-  { label: "Chest", values: [33, 35, 37, 39, 41, 43, 45, 47, 49, 51] },
-  { label: "Length", values: [24.5, 25.5, 26.5, 27.5, 28.5, 29.5, 30.5, 31.5, 32.5, 33] },
-  { label: "Shoulder", values: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23] },
-  { label: "Half sleeve", values: [7, 7.25, 7.5, 8, 8.25, 8.5, 9, 9.25, 9.5, 10] },
-  { label: "Sleeve opening", values: [10, 11, 11.5, 12, 13, 13.5, 14, 14.5, 15, 15.5] },
-];
-
-const SHORTS_SIZES = ["S", "M", "L", "XL", "XXL"];
-const SHORTS_NOMINAL = [36, 38, 40, 42, 44];
-const SHORTS_ROWS: { label: string; values: number[] }[] = [
-  { label: "Waist length", values: [15, 16, 17, 18, 19] },
-  { label: "Thigh", values: [23, 24, 25, 25, 26.5] },
-  { label: "Bottom", values: [20, 21, 22, 23, 24] },
-];
-
-function Table({
-  title,
-  sizes,
-  nominal,
-  rows,
-}: {
-  title: string;
-  sizes: string[];
-  nominal: number[];
-  rows: { label: string; values: (number | string)[] }[];
-}) {
+function Table({ chart }: { chart: SizeChartData }) {
   return (
     <div>
       <h4 className="mb-2 text-sm font-black uppercase tracking-wide text-rcc-green">
-        {title} <span className="font-medium text-rcc-green/50">(inches)</span>
+        {chart.name} <span className="font-medium text-rcc-green/50">(inches)</span>
       </h4>
       <div className="overflow-x-auto rounded-xl border border-rcc-green/10">
         <table className="w-full min-w-[420px] border-collapse text-sm">
           <thead>
             <tr className="bg-rcc-green text-rcc-sand">
               <th className="px-3 py-2 text-left font-bold">Size</th>
-              {sizes.map((s, i) => (
+              {chart.sizes.map((s, i) => (
                 <th key={s} className="px-2 py-2 text-center font-bold">
                   {s}
-                  <span className="block text-[10px] font-medium text-rcc-lime">
-                    {nominal[i]}
-                  </span>
+                  {chart.nominal[i] != null && (
+                    <span className="block text-[10px] font-medium text-rcc-lime">{chart.nominal[i]}</span>
+                  )}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, ri) => (
+            {chart.rows.map((r, ri) => (
               <tr key={r.label} className={ri % 2 ? "bg-rcc-sand" : "bg-white"}>
                 <td className="px-3 py-2 font-semibold text-rcc-green">{r.label}</td>
                 {r.values.map((v, i) => (
@@ -75,8 +42,11 @@ function Table({
   );
 }
 
-export function SizeChart({ withShorts = false }: { withShorts?: boolean }) {
+/** Size guide modal, driven entirely by CRM-managed charts -- pass whichever charts apply to the product. */
+export function SizeChart({ charts }: { charts: SizeChartData[] }) {
   const [open, setOpen] = useState(false);
+  if (charts.length === 0) return null;
+
   return (
     <>
       <button
@@ -102,23 +72,15 @@ export function SizeChart({ withShorts = false }: { withShorts?: boolean }) {
             </div>
 
             <div className="space-y-6">
-              <Table title="Jersey" sizes={JERSEY_SIZES} nominal={JERSEY_NOMINAL} rows={JERSEY_ROWS} />
-              {withShorts && (
-                <Table title="Shorts" sizes={SHORTS_SIZES} nominal={SHORTS_NOMINAL} rows={SHORTS_ROWS} />
-              )}
+              {charts.map((chart) => (
+                <Table key={chart.slug} chart={chart} />
+              ))}
 
               <div className="rounded-xl bg-white p-4 text-sm leading-relaxed text-rcc-green/80">
                 <p className="font-bold text-rcc-green">How to measure</p>
-                <ul className="mt-1 space-y-1 text-rcc-green/70">
-                  <li>• <b>Chest</b> — measure under your arms, around the fullest part of your chest.</li>
-                  <li>• <b>Length</b> — from the highest point of the shoulder seam to the bottom hem.</li>
-                  {withShorts && (
-                    <li>• <b>Waist length</b> — from the top of the waistband to the bottom hem.</li>
-                  )}
-                </ul>
-                <p className="mt-2 text-rcc-green/70">
-                  <b>Fit tip:</b> on the borderline between two sizes, pick the smaller for a
-                  tighter fit or the larger for a looser fit.
+                <p className="mt-1 text-rcc-green/70">
+                  Lay a similar well-fitting garment flat and measure across, or have someone measure you directly.
+                  On the borderline between two sizes, pick the smaller for a tighter fit or the larger for a looser fit.
                 </p>
                 <p className="mt-2 text-xs font-semibold text-rcc-clay">
                   There may be a tolerance of ±0.5 inch depending on the size.
