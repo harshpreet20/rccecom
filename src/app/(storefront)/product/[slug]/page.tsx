@@ -41,7 +41,9 @@ export default async function ProductPage({
       {/* Product structured data for SEO rich results + GEO answer engines */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd(product)).replace(/</g, "\\u003c"),
+        }}
       />
       <nav className="mb-6 text-sm text-rcc-mist">
         <Link href="/" className="hover:text-rcc-gold">
