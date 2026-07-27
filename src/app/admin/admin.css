@@ -37,62 +37,68 @@
 }
 
 /* Flat-with-depth design system -- class names kept for compatibility with
-   existing markup. Plain CSS (no @layer components) because Tailwind's
-   directives are only initialized once, in the root src/app/globals.css --
-   this stylesheet is imported separately, only from src/app/admin/layout.tsx,
-   so it cannot declare its own @tailwind layers. Elements with no bg-*
-   utility still get a sensible default background plus a visible shadow so
-   nothing reads as flat/paperlike. */
-  .neu-card,
-  .neu-raised,
-  .neu-raised-sm,
-  .neu-flat {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
-    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-  }
-  .neu-card:hover {
-    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.12), 0 2px 4px rgba(16, 24, 40, 0.08);
-    border-color: #d1d5db;
-  }
+   existing markup. Selectors are wrapped in :where(...) so every rule below
+   carries zero specificity. This stylesheet is imported separately from
+   src/app/admin/layout.tsx and run through its own PostCSS/Tailwind pass
+   (no @tailwind directives of its own), so `@layer components` isn't usable
+   here -- Tailwind's PostCSS plugin errors with "no matching @tailwind
+   components directive" because it never sees one in this file. :where()
+   gets the same practical outcome without needing layers: a same-element
+   Tailwind utility (any ordinary class selector, specificity 0-1-0) always
+   outranks a :where()-wrapped rule (specificity 0-0-0), regardless of
+   source order. Without this, plain equal-specificity class selectors would
+   let admin.css's later-loaded .neu-btn/.neu-card silently beat intentional
+   bg-* utilities used on the same element (e.g. the invisible white-on-white
+   "bg-gray-900 ... neu-btn" buttons bug this replaces). Elements with no
+   bg-* utility still get a sensible default background plus a visible
+   shadow so nothing reads as flat/paperlike. */
+:where(.neu-card, .neu-raised, .neu-raised-sm, .neu-flat) {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+:where(.neu-card):hover {
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.12), 0 2px 4px rgba(16, 24, 40, 0.08);
+  border-color: #d1d5db;
+}
 
-  .neu-pressed {
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    box-shadow: inset 0 1px 3px rgba(16, 24, 40, 0.08);
-  }
+:where(.neu-pressed) {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  box-shadow: inset 0 1px 3px rgba(16, 24, 40, 0.08);
+}
 
-  .neu-btn {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
-    transition: all 0.15s ease;
-  }
-  .neu-btn:hover {
-    box-shadow: 0 4px 10px rgba(16, 24, 40, 0.16), 0 2px 4px rgba(16, 24, 40, 0.08);
-    border-color: #d1d5db;
-    transform: translateY(-1px);
-    filter: brightness(1.04);
-  }
-  .neu-btn:active {
-    box-shadow: inset 0 1px 3px rgba(16, 24, 40, 0.12);
-    transform: translateY(0);
-    filter: brightness(0.97);
-  }
+:where(.neu-btn) {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+  transition: all 0.15s ease;
+}
+:where(.neu-btn):hover {
+  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.16), 0 2px 4px rgba(16, 24, 40, 0.08);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+:where(.neu-btn):active {
+  box-shadow: inset 0 1px 3px rgba(16, 24, 40, 0.12);
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
 
-  .neu-input {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.04);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .neu-input:focus {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-  }
+:where(.neu-input) {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+:where(.neu-input):focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
 
-  .neu-nav {
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
-  }
+:where(.neu-nav) {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+}
