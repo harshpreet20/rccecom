@@ -31,7 +31,7 @@ async function startScrape() {
   const run = await client.actor("apify/instagram-scraper").start(input, {
     webhooks: [{
       eventTypes: ["ACTOR.RUN.SUCCEEDED"],
-      requestUrl: `${baseUrl}/api/scrape-status?collect=true`,
+      requestUrl: `${baseUrl}/api/admin/scrape-status?collect=true`,
     }],
   });
 
@@ -157,7 +157,12 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const result = await startScrape();
     return NextResponse.json(result);
