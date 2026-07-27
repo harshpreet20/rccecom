@@ -8,9 +8,11 @@ import { useState } from "react";
  * measurements plus the matching shorts chart. Tolerance ≈ ±0.5 inch.
  */
 
-const JERSEY_SIZES = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
-const JERSEY_NOMINAL = [32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
-const JERSEY_ROWS: { label: string; values: (number | string)[] }[] = [
+// Exported (not just local) so the AI assistant (src/lib/assistant/context.ts)
+// can quote the exact same numbers instead of guessing at sizing.
+export const JERSEY_SIZES = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
+export const JERSEY_NOMINAL = [32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+export const JERSEY_ROWS: { label: string; values: (number | string)[] }[] = [
   { label: "Chest", values: [33, 35, 37, 39, 41, 43, 45, 47, 49, 51] },
   { label: "Length", values: [24.5, 25.5, 26.5, 27.5, 28.5, 29.5, 30.5, 31.5, 32.5, 33] },
   { label: "Shoulder", values: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23] },
@@ -18,9 +20,9 @@ const JERSEY_ROWS: { label: string; values: (number | string)[] }[] = [
   { label: "Sleeve opening", values: [10, 11, 11.5, 12, 13, 13.5, 14, 14.5, 15, 15.5] },
 ];
 
-const SHORTS_SIZES = ["S", "M", "L", "XL", "XXL"];
-const SHORTS_NOMINAL = [36, 38, 40, 42, 44];
-const SHORTS_ROWS: { label: string; values: number[] }[] = [
+export const SHORTS_SIZES = ["S", "M", "L", "XL", "XXL"];
+export const SHORTS_NOMINAL = [36, 38, 40, 42, 44];
+export const SHORTS_ROWS: { label: string; values: number[] }[] = [
   { label: "Waist length", values: [15, 16, 17, 18, 19] },
   { label: "Thigh", values: [23, 24, 25, 25, 26.5] },
   { label: "Bottom", values: [20, 21, 22, 23, 24] },

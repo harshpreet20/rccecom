@@ -4,6 +4,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
+import { AssistantWidget } from "@/components/AssistantWidget";
 import { storeConfig } from "@/lib/config";
 import { organizationJsonLd } from "@/lib/seo";
 
@@ -58,6 +59,7 @@ export default function RootLayout({
           <Footer />
           <CartDrawer />
         </CartProvider>
+        <AssistantWidget />
       </body>
     </html>
   );

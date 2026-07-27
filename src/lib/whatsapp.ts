@@ -39,3 +39,21 @@ export function buildWhatsappOrderUrl(order: OrderPayload): string {
   const text = encodeURIComponent(lines.join("\n"));
   return `https://wa.me/${storeConfig.whatsappNumber}?text=${text}`;
 }
+
+/**
+ * Build a wa.me link pre-filled with a handoff summary, for the AI assistant
+ * escalating a chat to a human (src/lib/assistant/escalation.ts). Same
+ * number + wa.me shape as buildWhatsappOrderUrl above, just without an order
+ * payload -- used when there's a conversation to hand off rather than a
+ * completed order to confirm.
+ */
+export function buildWhatsappSupportUrl(summary: string, sessionRef?: string): string {
+  const lines: string[] = [];
+  lines.push(`*RCC store assistant handoff*`);
+  if (sessionRef) lines.push(`Session: ${sessionRef}`);
+  lines.push("");
+  lines.push(summary);
+
+  const text = encodeURIComponent(lines.join("\n"));
+  return `https://wa.me/${storeConfig.whatsappNumber}?text=${text}`;
+}
