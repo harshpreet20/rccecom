@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
+import { CustomerAuthProvider } from "@/components/CustomerAuthProvider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -52,12 +53,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }}
         />
-        <CartProvider>
-          <Header />
-          <main className="min-h-[70vh]">{children}</main>
-          <Footer />
-          <CartDrawer />
-        </CartProvider>
+        <CustomerAuthProvider>
+          <CartProvider>
+            <Header />
+            <main className="min-h-[70vh]">{children}</main>
+            <Footer />
+            <CartDrawer />
+          </CartProvider>
+        </CustomerAuthProvider>
       </body>
     </html>
   );

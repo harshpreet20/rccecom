@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
+import { useCustomerAuth } from "@/components/CustomerAuthProvider";
 import { Logo } from "./Logo";
 
 const LINKS = [
@@ -15,6 +16,8 @@ const LINKS = [
 
 export function Header() {
   const { count, openCart } = useCart();
+  const { user } = useCustomerAuth();
+  const initial = user?.email?.[0]?.toUpperCase();
 
   return (
     <header className="sticky top-0 z-40 border-b border-rcc-line bg-rcc-night/90 backdrop-blur">
@@ -44,6 +47,19 @@ export function Header() {
             aria-label="Track order"
           >
             🔍
+          </Link>
+          <Link
+            href={user ? "/account" : "/account/login"}
+            className="grid h-9 w-9 place-items-center rounded-full text-rcc-mist transition hover:text-rcc-gold"
+            aria-label={user ? "Your account" : "Log in"}
+          >
+            {initial ? (
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-rcc-gold/20 text-xs font-black text-rcc-gold">
+                {initial}
+              </span>
+            ) : (
+              "👤"
+            )}
           </Link>
           <button
             onClick={openCart}
