@@ -121,7 +121,7 @@ export default function TrackPage() {
       )}
 
       <p className="mt-6 text-center text-xs text-rcc-mist/70">
-        Need help? WhatsApp us at {storeConfig.upiId} or{" "}
+        Need help? WhatsApp us at {storeConfig.whatsappNumber} or{" "}
         <Link href="/" className="font-semibold text-rcc-leaf hover:underline">
           keep shopping
         </Link>
