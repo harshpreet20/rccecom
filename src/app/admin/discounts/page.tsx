@@ -109,11 +109,13 @@ export default function DiscountsPage() {
 
   async function remove(d: Discount) {
     if (!confirm(`Delete code "${d.code}"?`)) return;
-    await fetch(`/api/store/discounts?id=${d.id}`, {
+    const res = await fetch(`/api/admin/store/discounts?id=${d.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    setDiscounts((prev) => prev.filter((x) => x.id !== d.id));
+    if (res.ok) {
+      setDiscounts((prev) => prev.filter((x) => x.id !== d.id));
+    }
   }
 
   if (authLoading || !isStaff) {
