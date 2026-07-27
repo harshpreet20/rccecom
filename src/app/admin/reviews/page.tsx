@@ -47,7 +47,7 @@ export default function ReviewsPage() {
     setLoading(true);
     try {
       const src = sourceFilter !== "all" ? `?source=${sourceFilter}` : "";
-      const res = await fetch(`/api/reviews${src}`);
+      const res = await fetch(`/api/admin/reviews${src}`);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setReviews(json.reviews || []);
