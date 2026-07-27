@@ -111,7 +111,7 @@ export default function ReportsPage() {
     if (!confirm("Delete this report?")) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/reports?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/reports?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         setReports((prev) => prev.filter((r) => r.id !== id));
         if (expandedId === id) setExpandedId(null);
@@ -132,7 +132,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     const params = filter === "all" ? "" : `?agent=${filter}`;
-    fetch(`/api/reports${params}`)
+    fetch(`/api/admin/reports${params}`)
       .then((r) => r.json())
       .then((data) => setReports(data.reports || []))
       .catch(console.error)
