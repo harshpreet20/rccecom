@@ -75,3 +75,22 @@ language sql security definer set search_path = public as $$
   limit 1;
 $$;
 grant execute on function public.lookup_order(text, text) to anon, authenticated;
+
+-- Assistant conversations (AI shopping/support widget) -- store-specific,
+-- applied via supabase/migrations/20260727120000_assistant_conversations.sql
+-- rather than the shared platform migrations above. RLS is enabled with no
+-- anon/authenticated policies at all, so this table is server-write-only
+-- (service-role key) -- see src/lib/assistant/supabase-admin.ts.
+create table if not exists public.assistant_conversations (
+  id uuid primary key default gen_random_uuid(),
+  session_id text not null,
+  customer_identifier text,
+  messages jsonb not null default '[]',
+  route_history jsonb not null default '[]',
+  outcome text not null default 'in_progress'
+    check (outcome in ('resolved', 'escalated', 'abandoned', 'in_progress')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.assistant_conversations enable row level security;
+-- (no policies -- anon/authenticated get zero access; service role bypasses RLS)
