@@ -9,8 +9,8 @@ import AuthProvider from "@/components/admin/AuthProvider";
 // plus a repainted wrapper (see admin.css's .admin-root) so the storefront's
 // dark body theme doesn't bleed into the dashboard.
 export const metadata: Metadata = {
-  title: "Content Agent Dashboard",
-  description: "6 AI agents managing your content",
+  title: "RCC Store Admin",
+  description: "Manage orders, products, and more",
 };
 
 export default function AdminLayout({

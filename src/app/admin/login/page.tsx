@@ -20,7 +20,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm text-center">
           <img src="/rcc-crest.webp" alt="Racquets Club Community" className="w-20 h-20 rounded-full object-cover mx-auto mb-3 neu-raised-sm" />
           <h1 className="text-2xl font-extrabold bg-gradient-to-r from-amber-500 via-pink-500 to-violet-600 bg-clip-text text-transparent mb-4">
-            ContentAgent
+            RCC Admin
           </h1>
           <div className="bg-[#f5f6f8] rounded-2xl neu-raised p-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl neu-pressed">
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm text-center">
           <img src="/rcc-crest.webp" alt="Racquets Club Community" className="w-20 h-20 rounded-full object-cover mx-auto mb-3 neu-raised-sm" />
           <h1 className="text-2xl font-extrabold bg-gradient-to-r from-amber-500 via-pink-500 to-violet-600 bg-clip-text text-transparent mb-4">
-            ContentAgent
+            RCC Admin
           </h1>
           <div className="bg-[#f5f6f8] rounded-2xl neu-raised p-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl neu-pressed">
@@ -105,7 +105,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <img src="/rcc-crest.webp" alt="Racquets Club Community" className="w-20 h-20 rounded-full object-cover mx-auto mb-3 neu-raised-sm" />
           <h1 className="text-2xl font-extrabold bg-gradient-to-r from-amber-500 via-pink-500 to-violet-600 bg-clip-text text-transparent mb-1">
-            ContentAgent
+            RCC Admin
           </h1>
           <p className="text-sm text-gray-400">
             {isSignUp ? "Create your account" : "Sign in to your dashboard"}
