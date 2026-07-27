@@ -17,11 +17,12 @@ interface AppUser {
 }
 
 export default function AdminPage() {
-  const { user, loading: authLoading, isAdmin, status } = useAuth();
+  const { user, loading: authLoading, isAdmin, status, session } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const token = session?.access_token;
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/admin/login");
@@ -29,13 +30,15 @@ export default function AdminPage() {
   }, [user, authLoading, isAdmin, router]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !token) return;
     loadUsers();
-  }, [isAdmin]);
+  }, [isAdmin, token]);
 
   async function loadUsers() {
     try {
-      const res = await fetch("/api/admin/admin/users");
+      const res = await fetch("/api/admin/admin/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const json = await res.json();
       setUsers(json.users || []);
     } catch {
@@ -50,7 +53,7 @@ export default function AdminPage() {
     try {
       await fetch("/api/admin/admin/users", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId, ...updates }),
       });
       await loadUsers();
@@ -65,7 +68,10 @@ export default function AdminPage() {
     if (!confirm(`Remove ${email} from the system?`)) return;
     setActionLoading(userId);
     try {
-      await fetch(`/api/admin/users?id=${userId}`, { method: "DELETE" });
+      await fetch(`/api/admin/admin/users?id=${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     } catch {
       // silent
