@@ -104,6 +104,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       .finally(() => setLoading(false));
 
     const { data: { subscription } } = sb.auth.onAuthStateChange(async (_event, session) => {
+      // getSession() above already handled the initial session and fired
+      // fetchUserStatus for it; without this guard, INITIAL_SESSION fires a
+      // second concurrent status-check call for every user on load.
+      if (_event === "INITIAL_SESSION") return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

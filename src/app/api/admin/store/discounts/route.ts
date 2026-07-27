@@ -14,12 +14,29 @@ const FIELDS = [
   "min_order_amount",
 ] as const;
 
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function pick(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
   for (const f of FIELDS) {
+    if (UNSAFE_KEYS.has(f)) continue;
     if (f in body) out[f] = body[f];
   }
   return out;
+}
+
+/** Validates `value` when present, using `type` (existing or incoming) to
+ * decide whether a percentage cap applies. Returns an error string, or null
+ * if valid / not present. */
+function validateValue(value: unknown, type: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return "value must be a non-negative number";
+  }
+  if (type === "percentage" && value > 100) {
+    return "percentage discounts cannot exceed 100";
+  }
+  return null;
 }
 
 /** GET /api/store/discounts — full list (staff only). */
@@ -54,6 +71,8 @@ export async function POST(request: Request) {
   if (!row.code || row.value == null) {
     return NextResponse.json({ error: "code and value are required" }, { status: 400 });
   }
+  const valueError = validateValue(row.value, row.type);
+  if (valueError) return NextResponse.json({ error: valueError }, { status: 400 });
 
   const supabase = authedClient(token);
   const { data, error } = await supabase.from("discounts").insert(row).select("*").maybeSingle();
@@ -87,6 +106,8 @@ export async function PATCH(request: Request) {
 
   const updates = pick(body);
   if (typeof updates.code === "string") updates.code = updates.code.trim().toUpperCase();
+  const valueError = validateValue(updates.value, updates.type);
+  if (valueError) return NextResponse.json({ error: valueError }, { status: 400 });
 
   const supabase = authedClient(token);
   const { data, error } = await supabase

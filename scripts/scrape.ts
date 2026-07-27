@@ -10,7 +10,7 @@ if (!APIFY_TOKEN) {
   process.exit(1);
 }
 
-const MY_HANDLE = process.env.INSTAGRAM_HANDLE || "racquetsclubcomunity";
+const MY_HANDLE = process.env.INSTAGRAM_HANDLE || "racquetsclubcommunity";
 const COMPETITORS = (process.env.COMPETITOR_HANDLES || "").split(",").filter(Boolean);
 const ALL_HANDLES = [MY_HANDLE, ...COMPETITORS];
 
@@ -90,12 +90,14 @@ async function scrapeProfiles() {
   writeFileSync(outPath, JSON.stringify(output, null, 2));
   console.log(`Data saved to ${outPath}`);
 
-  // Save to Supabase for production
+  // Save to Supabase for production. Uses the service-role key (not the
+  // anon key) since this is a server-side CLI script and the `scrapes`
+  // table has RLS enabled with no anon insert policy.
   const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (sbUrl && sbKey) {
     const supabase = createClient(sbUrl, sbKey);
-    const { error } = await supabase.from("content_agent_scrapes").insert({
+    const { error } = await supabase.from("scrapes").insert({
       my_handle: MY_HANDLE,
       competitors: COMPETITORS,
       data: output,

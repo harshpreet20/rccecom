@@ -19,7 +19,7 @@ const STATS_CONFIG = [
   { key: "avgComments", label: "Avg Comments", icon: "chat", format: (v: number) => v.toLocaleString() },
   { key: "totalLikes", label: "Total Likes", icon: "fire", format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v.toString() },
   { key: "totalViews", label: "Total Views", icon: "eye", format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v.toString() },
-  { key: "engagementRate", label: "Engagement", icon: "chart", format: (v: number) => `${v.toFixed(1)}%` },
+  { key: "engagementRate", label: "Engagement", icon: "chart", format: (v: number) => `${(typeof v === "number" && Number.isFinite(v) ? v : 0).toFixed(1)}%` },
 ] as const;
 
 const COLORS = ["#F59E0B", "#EC4899", "#8B5CF6", "#10B981", "#3B82F6", "#6366F1"];

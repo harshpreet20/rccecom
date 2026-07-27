@@ -5,9 +5,12 @@ export const dynamic = "force-dynamic";
 
 const FIELDS = ["name", "slug", "description", "sort_order", "active"] as const;
 
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function pick(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
   for (const f of FIELDS) {
+    if (UNSAFE_KEYS.has(f)) continue;
     if (f in body) out[f] = body[f];
   }
   return out;

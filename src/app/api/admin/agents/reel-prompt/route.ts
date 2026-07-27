@@ -4,6 +4,9 @@ import { askClaude } from "@/lib/admin/claude";
 import { saveReport } from "@/lib/admin/supabase-server";
 import { getLearnings, buildEnhancedPrompt } from "@/lib/admin/micro-intel";
 import { buildBrainContext, injectBrainContext } from "@/lib/admin/brain";
+import { requireAdmin } from "@/lib/admin/require-admin";
+
+export const maxDuration = 180;
 
 const QUALITY_PRESETS: Record<string, { label: string; fps: number; resolution: string; detail: string }> = {
   social: {
@@ -129,6 +132,9 @@ CRITICAL FORMAT RULES:
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const quality = body.quality === "cinematic" ? "cinematic" : "social";
 

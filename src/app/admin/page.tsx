@@ -69,7 +69,7 @@ const AGENTS = [
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { user, status, statusError, loading: authLoading, retryStatus } = useAuth();
+  const { user, status, statusError, loading: authLoading, retryStatus, session } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -78,7 +78,9 @@ export default function Dashboard() {
   }, [user, authLoading, status, router]);
 
   function loadDashboardData() {
-    return fetch("/api/admin/data")
+    return fetch("/api/admin/data", {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    })
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)

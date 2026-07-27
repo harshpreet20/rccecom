@@ -30,9 +30,12 @@ const FIELDS = [
   "flipkart_url",
 ] as const;
 
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function pick(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
   for (const f of FIELDS) {
+    if (UNSAFE_KEYS.has(f)) continue;
     if (f in body) out[f] = body[f];
   }
   return out;
@@ -73,6 +76,9 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (typeof row.price !== "number" || !Number.isFinite(row.price) || row.price < 0) {
+    return NextResponse.json({ error: "price must be a non-negative number" }, { status: 400 });
+  }
 
   const supabase = authedClient(token);
   const { data, error } = await supabase
@@ -108,10 +114,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
+  const updates = pick(body);
+  if ("price" in updates && (typeof updates.price !== "number" || !Number.isFinite(updates.price) || updates.price < 0)) {
+    return NextResponse.json({ error: "price must be a non-negative number" }, { status: 400 });
+  }
+
   const supabase = authedClient(token);
   const { data, error } = await supabase
     .from("products")
-    .update(pick(body))
+    .update(updates)
     .eq("id", id)
     .select("*")
     .maybeSingle();

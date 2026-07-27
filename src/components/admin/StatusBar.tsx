@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/admin/AuthProvider";
 
 interface Check {
-  status: "ok" | "error";
+  status: "ok" | "pending" | "error";
   latency?: number;
   error?: string;
 }
@@ -24,6 +25,7 @@ const SERVICE_META: Record<string, { label: string; icon: string }> = {
 const WARN_ERRORS = ["Not generated yet", "No scraped data", "Regenerating", "New data available"];
 
 export default function StatusBar() {
+  const { session } = useAuth();
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [brainGenerating, setBrainGenerating] = useState(false);
@@ -32,11 +34,14 @@ export default function StatusBar() {
     fetchHealth();
     const interval = setInterval(fetchHealth, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [session]);
 
   async function fetchHealth() {
+    if (!session?.access_token) return;
     try {
-      const res = await fetch("/api/admin/health");
+      const res = await fetch("/api/admin/health", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       const json = await res.json();
       setHealth(json);
     } catch {
@@ -47,9 +52,13 @@ export default function StatusBar() {
   }
 
   async function generateBrain() {
+    if (!session?.access_token) return;
     setBrainGenerating(true);
     try {
-      const res = await fetch("/api/admin/brain", { method: "POST" });
+      const res = await fetch("/api/admin/brain", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       const json = await res.json();
       if (json.success) {
         await fetchHealth();

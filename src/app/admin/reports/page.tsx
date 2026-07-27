@@ -5,20 +5,7 @@ import { useAuth } from "@/components/admin/AuthProvider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/components/admin/Sidebar";
-
-function sanitizeReport(raw: string): string {
-  let text = raw.trim();
-  text = text.replace(/^```(?:html)?\s*/i, "").replace(/\s*```\s*$/, "");
-  const firstTag = text.indexOf("<");
-  const lastTag = text.lastIndexOf(">");
-  if (firstTag !== -1 && lastTag !== -1 && lastTag > firstTag) {
-    text = text.substring(firstTag, lastTag + 1);
-  }
-  if (!text.startsWith("<")) {
-    text = `<div style="font-family:-apple-system,sans-serif;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
-  }
-  return text;
-}
+import { sanitizeReportHtml as sanitizeReport } from "@/lib/admin/sanitize-report";
 
 const AGENT_META: Record<string, { icon: string; color: string; bgColor: string; label: string }> = {
   ideator:      { icon: "\u{1F4A1}", color: "#F59E0B", bgColor: "#FFFBEB", label: "Ideator" },
@@ -43,7 +30,7 @@ interface Report {
 }
 
 export default function ReportsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, session } = useAuth();
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +98,10 @@ export default function ReportsPage() {
     if (!confirm("Delete this report?")) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/admin/reports?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/reports?id=${id}`, {
+        method: "DELETE",
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       if (res.ok) {
         setReports((prev) => prev.filter((r) => r.id !== id));
         if (expandedId === id) setExpandedId(null);

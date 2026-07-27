@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { loadData, getMyStats, getCompetitorStats } from "@/lib/admin/data";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 const DEFAULT_COMPETITORS = "wtfpuneet,badmintonclubx,shuttlify,delhibadmintonclub,badmintonclubofindia,eastdelhisportsclub,kanikaaaa108,vibewithkanika_";
 const ALL_EXPECTED = DEFAULT_COMPETITORS.split(",");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   // Try local file first (dev mode)
   const localData = loadData();
   if (localData) {
@@ -34,10 +38,10 @@ export async function GET() {
 
     const scraped = data.data;
     const myHandle = data.my_handle;
-    const competitors = data.competitors;
+    const competitors: string[] = Array.isArray(data.competitors) ? data.competitors : [];
     const profiles = scraped.profiles || scraped;
 
-    const myPosts = profiles[myHandle] || [];
+    const myPosts = Array.isArray(profiles[myHandle]) ? profiles[myHandle] : [];
     const totalLikes = myPosts.reduce((s: number, p: any) => s + (p.likes || 0), 0);
     const totalComments = myPosts.reduce((s: number, p: any) => s + (p.comments || 0), 0);
     const totalViews = myPosts.reduce((s: number, p: any) => s + (p.views || 0), 0);
@@ -47,7 +51,7 @@ export async function GET() {
 
     const allHandles = Array.from(new Set([...competitors, ...ALL_EXPECTED]));
     const competitorStats = allHandles.map((handle: string) => {
-      const posts = profiles[handle] || [];
+      const posts = Array.isArray(profiles[handle]) ? profiles[handle] : [];
       const tl = posts.reduce((s: number, p: any) => s + (p.likes || 0), 0);
       const al = posts.length ? Math.round(tl / posts.length) : 0;
       const tp = [...posts].sort((a: any, b: any) => b.likes - a.likes)[0] || null;

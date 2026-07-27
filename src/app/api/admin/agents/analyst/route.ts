@@ -4,6 +4,9 @@ import { askClaude } from "@/lib/admin/claude";
 import { saveReport } from "@/lib/admin/supabase-server";
 import { getLearnings, buildEnhancedPrompt } from "@/lib/admin/micro-intel";
 import { buildBrainContext, injectBrainContext } from "@/lib/admin/brain";
+import { requireAdmin } from "@/lib/admin/require-admin";
+
+export const maxDuration = 180;
 
 const BASE_SYSTEM = `You are the ANALYST agent for a badminton/racquet sports Instagram account.
 Your job: provide a data-driven performance report.
@@ -25,7 +28,10 @@ CRITICAL FORMAT RULES:
 - Never use em dashes or en dashes. Use " - " (space hyphen space) instead.
 - Your entire response must start with < and end with >. Nothing else.`;
 
-export async function POST() {
+export async function POST(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   const data = await loadDataWithFallback();
   if (!data) return NextResponse.json({ error: "No data. Run: npm run scrape" }, { status: 404 });
 

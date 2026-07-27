@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Analytics is visible to any approved staff account in the sidebar
+  // (Sidebar's "Performance" section isn't role-gated), so accept all roles.
+  const auth = await requireAdmin(request, ["admin", "content", "sales", "user"]);
+  if (!auth.ok) return auth.response;
+
   try {
     const supabase = createAdminClient();
 

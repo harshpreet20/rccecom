@@ -40,7 +40,7 @@ interface CompStat {
 }
 
 export default function AnalyticsPage() {
-  const { user, loading: authLoading, status } = useAuth();
+  const { user, loading: authLoading, status, session } = useAuth();
   const router = useRouter();
   const [account, setAccount] = useState<any>(null);
   const [insights, setInsights] = useState<any>({});
@@ -60,13 +60,15 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!user || status !== "approved") return;
     loadAnalytics();
-  }, [user]);
+  }, [user, status]);
 
   async function loadAnalytics() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/instagram/insights");
+      const res = await fetch("/api/admin/instagram/insights", {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setAccount(json.account);

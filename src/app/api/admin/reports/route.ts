@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const agent = searchParams.get("agent");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const rawLimit = parseInt(searchParams.get("limit") || "20", 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 20;
 
   const supabase = createAdminClient();
   let query = supabase
@@ -27,6 +29,9 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 

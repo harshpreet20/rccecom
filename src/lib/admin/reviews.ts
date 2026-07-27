@@ -1,5 +1,6 @@
 import { ApifyClient } from "apify-client";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { getAppBaseUrl } from "@/lib/admin/base-url";
 
 const TRUSTPILOT_URL = "https://www.trustpilot.com/review/racquetsclubcommunity.com";
 const GOOGLE_MAPS_URL = process.env.GOOGLE_MAPS_URL || "";
@@ -23,17 +24,30 @@ export async function startReviewScrapes() {
   if (!apifyToken) throw new Error("Missing APIFY_API_TOKEN");
 
   const client = new ApifyClient({ token: apifyToken });
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://content-agent-gamma.vercel.app";
-  const webhookUrl = `${baseUrl}/api/review-webhook`;
+  const baseUrl = getAppBaseUrl();
+  const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+
+  // Webhooks let Apify push results back the moment a run finishes; without
+  // a reachable base URL (or the shared secret) we skip registering them and
+  // fall back to pollAndCollectReviews() picking the results up later.
+  let tpOptions: { webhooks?: any[]; waitSecs?: number } = {};
+  let gOptions: { webhooks?: any[]; waitSecs?: number } = {};
+  if (baseUrl && webhookSecret) {
+    const webhookUrl = `${baseUrl}/api/admin/review-webhook`;
+    tpOptions = { webhooks: [{ eventTypes: ["ACTOR.RUN.SUCCEEDED"], requestUrl: `${webhookUrl}?source=trustpilot&secret=${webhookSecret}` }] };
+    gOptions = { webhooks: [{ eventTypes: ["ACTOR.RUN.SUCCEEDED"], requestUrl: `${webhookUrl}?source=google&secret=${webhookSecret}` }] };
+  } else {
+    console.warn("[reviews] Skipping Apify webhook registration -- NEXT_PUBLIC_APP_URL or APIFY_WEBHOOK_SECRET not set.");
+  }
 
   const [tpRun, gRun] = await Promise.all([
     client.actor("apify/trustpilot-scraper").start(
       { startUrls: [{ url: TRUSTPILOT_URL }], maxItems: 50 },
-      { webhooks: [{ eventTypes: ["ACTOR.RUN.SUCCEEDED"], requestUrl: `${webhookUrl}?source=trustpilot` }] }
+      tpOptions
     ),
     client.actor("compass/google-maps-reviews-scraper").start(
       buildGoogleScraperInput(),
-      { webhooks: [{ eventTypes: ["ACTOR.RUN.SUCCEEDED"], requestUrl: `${webhookUrl}?source=google` }] }
+      gOptions
     ),
   ]);
 
@@ -102,9 +116,13 @@ async function saveTrustpilotReviews(items: any[]) {
   const newReviews = reviews.filter((r) => r.review_text && !existingTexts.has(r.review_text));
 
   if (newReviews.length > 0) {
-    await supabase.from("reviews").insert(
+    const { error } = await supabase.from("reviews").insert(
       newReviews.map((r) => ({ source: "trustpilot" as const, ...r }))
     );
+    if (error) {
+      console.error("Failed to save Trustpilot reviews:", error.message);
+      return { collected: 0, total: reviews.length };
+    }
   }
 
   return { collected: newReviews.length, total: reviews.length };
@@ -135,9 +153,13 @@ async function saveGoogleReviews(items: any[]) {
   const newReviews = reviews.filter((r) => r.review_text && !existingTexts.has(r.review_text));
 
   if (newReviews.length > 0) {
-    await supabase.from("reviews").insert(
+    const { error } = await supabase.from("reviews").insert(
       newReviews.map((r) => ({ source: "google" as const, ...r }))
     );
+    if (error) {
+      console.error("Failed to save Google reviews:", error.message);
+      return { collected: 0, total: reviews.length };
+    }
   }
 
   return { collected: newReviews.length, total: reviews.length };

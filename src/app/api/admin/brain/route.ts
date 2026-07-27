@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { buildBrainContext } from "@/lib/admin/brain";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function POST() {
+export async function POST(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   try {
     const brain = await buildBrainContext(true);
     if (!brain) {

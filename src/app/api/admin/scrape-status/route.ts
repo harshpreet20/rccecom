@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ApifyClient } from "apify-client";
 import { createAdminClient } from "@/lib/admin/supabase-server";
 import { pollAndCollectReviews } from "@/lib/admin/reviews";
+import { buildBrainContext } from "@/lib/admin/brain";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -13,7 +14,17 @@ const COMPETITORS = (process.env.COMPETITOR_HANDLES || DEFAULT_COMPETITORS)
   .filter(Boolean);
 const ALL_HANDLES = [MY_HANDLE, ...COMPETITORS];
 
-export async function POST() {
+function checkSecret(request: Request): boolean {
+  const secret = process.env.APIFY_WEBHOOK_SECRET;
+  if (!secret) return false;
+  const { searchParams } = new URL(request.url);
+  return searchParams.get("secret") === secret;
+}
+
+export async function POST(request: Request) {
+  if (!checkSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return collectLatestRun();
 }
 
@@ -45,7 +56,7 @@ async function collectLatestRun() {
 
   const apifyToken = process.env.APIFY_API_TOKEN;
   if (!apifyToken) {
-    return NextResponse.json({ status: "ERROR", message: "Missing APIFY_API_TOKEN" });
+    return NextResponse.json({ status: "ERROR", message: "Missing APIFY_API_TOKEN" }, { status: 500 });
   }
 
   try {
@@ -111,20 +122,33 @@ async function collectLatestRun() {
         totalPosts: items.length,
       };
 
-      await supabase.from("scrapes").insert({
+      const { error: insertError } = await supabase.from("scrapes").insert({
         my_handle: MY_HANDLE,
         competitors: COMPETITORS,
         data: output,
       });
+
+      if (insertError) {
+        await supabase.from("scrape_runs").upsert(
+          { id: "latest", status: "FAILED", finished_at: new Date().toISOString() },
+          { onConflict: "id" }
+        );
+        return NextResponse.json(
+          { status: "ERROR", message: `Failed to save scrape: ${insertError.message}` },
+          { status: 500 }
+        );
+      }
 
       await supabase.from("scrape_runs").upsert(
         { id: "latest", status: "SUCCEEDED", finished_at: new Date().toISOString() },
         { onConflict: "id" }
       );
 
-      // Auto-regenerate brain context with the new data
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://content-agent-gamma.vercel.app";
-      fetch(`${baseUrl}/api/admin/brain`, { method: "POST" }).catch(() => {});
+      // Auto-regenerate brain context with the new data. Called in-process
+      // (not via HTTP self-fetch) since this server route runs with
+      // service-role access and /api/admin/brain now requires a user
+      // session -- a fire-and-forget fetch would just 401.
+      buildBrainContext(true).catch(() => {});
 
       return NextResponse.json({
         status: "SUCCEEDED",
@@ -149,10 +173,13 @@ async function collectLatestRun() {
       message: "Scrape in progress...",
     });
   } catch (e: any) {
-    return NextResponse.json({ status: "ERROR", message: e.message });
+    return NextResponse.json({ status: "ERROR", message: e.message }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!checkSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return collectLatestRun();
 }

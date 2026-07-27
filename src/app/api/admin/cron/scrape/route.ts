@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ApifyClient } from "apify-client";
 import { createAdminClient } from "@/lib/admin/supabase-server";
 import { startReviewScrapes } from "@/lib/admin/reviews";
+import { getAppBaseUrl } from "@/lib/admin/base-url";
+import { timingSafeEqual } from "crypto";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -27,12 +29,19 @@ async function startScrape() {
     searchLimit: 1,
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://content-agent-gamma.vercel.app";
+  const baseUrl = getAppBaseUrl();
+  const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+  const webhooks = baseUrl && webhookSecret
+    ? [{
+        eventTypes: ["ACTOR.RUN.SUCCEEDED" as const],
+        requestUrl: `${baseUrl}/api/admin/scrape-status?collect=true&secret=${webhookSecret}`,
+      }]
+    : undefined;
+  if (!webhooks) {
+    console.warn("[cron/scrape] Skipping Apify webhook registration -- NEXT_PUBLIC_APP_URL or APIFY_WEBHOOK_SECRET not set.");
+  }
   const run = await client.actor("apify/instagram-scraper").start(input, {
-    webhooks: [{
-      eventTypes: ["ACTOR.RUN.SUCCEEDED"],
-      requestUrl: `${baseUrl}/api/admin/scrape-status?collect=true`,
-    }],
+    ...(webhooks ? { webhooks } : {}),
   });
 
   const supabase = createAdminClient();
@@ -143,11 +152,32 @@ async function collectResults(runId: string, datasetId: string) {
   };
 }
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+/**
+ * Constant-time check of the cron bearer token against CRON_SECRET. Fails
+ * closed (500) if CRON_SECRET isn't configured, rather than the old
+ * behavior where an unset env var made the expected string literally
+ * "Bearer undefined" -- which any caller could send.
+ */
+function checkCronAuth(request: Request): { ok: true } | { ok: false; response: NextResponse } {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return { ok: false, response: NextResponse.json({ error: "Server misconfigured: CRON_SECRET not set" }, { status: 500 }) };
   }
+
+  const authHeader = request.headers.get("authorization") || "";
+  const expected = Buffer.from(`Bearer ${cronSecret}`);
+  const actual = Buffer.from(authHeader);
+
+  const isValid = expected.length === actual.length && timingSafeEqual(expected, actual);
+  if (!isValid) {
+    return { ok: false, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  return { ok: true };
+}
+
+export async function GET(request: Request) {
+  const auth = checkCronAuth(request);
+  if (!auth.ok) return auth.response;
 
   try {
     const result = await startScrape();
@@ -158,10 +188,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = checkCronAuth(request);
+  if (!auth.ok) return auth.response;
 
   try {
     const result = await startScrape();

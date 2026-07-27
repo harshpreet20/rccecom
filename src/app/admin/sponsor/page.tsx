@@ -86,7 +86,7 @@ const SPONSOR_AGENTS = [
 ];
 
 export default function SponsorPage() {
-  const { user, status, statusError, loading: authLoading, retryStatus } = useAuth();
+  const { user, status, statusError, loading: authLoading, retryStatus, session } = useAuth();
   const router = useRouter();
   const [handle, setHandle] = useState("");
   const [scraping, setScraping] = useState(false);
@@ -107,7 +107,10 @@ export default function SponsorPage() {
     try {
       const res = await fetch("/api/admin/sponsor/scrape", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ handle: handle.trim() }),
       });
       const json = await res.json();

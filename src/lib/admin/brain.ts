@@ -182,7 +182,7 @@ async function getReviewsSummary(): Promise<string> {
         : "N/A";
       const snippets = reviews
         .slice(0, 3)
-        .map((r: any) => `[${r.rating}/5] "${(r.title || r.review_text || "").slice(0, 80)}"`)
+        .map((r: any) => `[${r.rating}/5] "${(r.title || r.review_text || "").replace(/<[^>]*>/g, "").slice(0, 80)}"`)
         .join("\n");
       return `${label}: ${reviews.length} reviews, avg ${avg}/5\n${snippets}`;
     };

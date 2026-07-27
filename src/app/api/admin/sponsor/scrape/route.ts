@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { ApifyClient } from "apify-client";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const rawHandle = (body.handle || "").trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/.*$/, "");
 
@@ -64,7 +68,7 @@ export async function POST(request: Request) {
     const totalViews = posts.reduce((s: number, p: any) => s + p.views, 0);
     const avgLikes = posts.length > 0 ? Math.round(totalLikes / posts.length) : 0;
     const avgComments = posts.length > 0 ? Math.round(totalComments / posts.length) : 0;
-    const topPost = posts.sort((a: any, b: any) => b.likes - a.likes)[0] || null;
+    const topPost = [...posts].sort((a: any, b: any) => b.likes - a.likes)[0] || null;
 
     const sponsorData = {
       handle: rawHandle,

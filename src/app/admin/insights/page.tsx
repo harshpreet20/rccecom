@@ -36,6 +36,12 @@ function dayKey(d: Date) {
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 }
 
+/** Full YYYY-MM-DD bucket key so same-day-different-year orders don't get
+ * merged in the 14-day chart (dayKey alone has no year, e.g. "05 Jul"). */
+function dateBucketKey(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
 /** Pure aggregation so the numbers are easy to reason about. */
 function computeInsights(orders: Order[]) {
   const paid = orders.filter((o) => PAID.includes(o.status));
@@ -55,14 +61,14 @@ function computeInsights(orders: Order[]) {
   );
 
   // Revenue over the last 14 days (paid orders).
-  const days: { date: string; revenue: number; orders: number }[] = [];
+  const days: { key: string; date: string; revenue: number; orders: number }[] = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date(now - i * DAY);
-    days.push({ date: dayKey(d), revenue: 0, orders: 0 });
+    days.push({ key: dateBucketKey(d), date: dayKey(d), revenue: 0, orders: 0 });
   }
-  const idxByDate = new Map(days.map((d, i) => [d.date, i]));
+  const idxByDate = new Map(days.map((d, i) => [d.key, i]));
   for (const o of paid) {
-    const k = dayKey(new Date(o.created_at));
+    const k = dateBucketKey(new Date(o.created_at));
     const i = idxByDate.get(k);
     if (i !== undefined) {
       days[i].revenue += o.amount;

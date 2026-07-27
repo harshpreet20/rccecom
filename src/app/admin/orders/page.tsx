@@ -86,12 +86,19 @@ export default function OrdersPage() {
   async function setStatus(id: string, status: string) {
     setBusy(id);
     try {
-      await fetch("/api/admin/store/orders", {
+      const res = await fetch("/api/admin/store/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ id, status }),
       });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error || `Failed to update order status (${res.status})`);
+        return;
+      }
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    } catch (e: any) {
+      alert(e?.message || "Failed to update order status");
     } finally {
       setBusy(null);
     }

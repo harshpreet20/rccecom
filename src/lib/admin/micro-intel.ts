@@ -49,7 +49,13 @@ export async function saveFeedback(
     .eq("agent_name", agentName);
 
   if (count && count % 5 === 0) {
-    await retrain(agentName);
+    try {
+      await retrain(agentName);
+    } catch (e: any) {
+      // The feedback row is already saved -- a retrain failure (external
+      // Claude API call) shouldn't fail the whole feedback submission.
+      console.error(`retrain(${agentName}) failed:`, e?.message || e);
+    }
   }
 }
 

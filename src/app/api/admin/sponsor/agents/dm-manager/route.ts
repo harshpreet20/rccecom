@@ -4,6 +4,7 @@ import { askClaude } from "@/lib/admin/claude";
 import { saveReport, createAdminClient } from "@/lib/admin/supabase-server";
 import { getLearnings, buildEnhancedPrompt } from "@/lib/admin/micro-intel";
 import { buildBrainContext, injectBrainContext } from "@/lib/admin/brain";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export const maxDuration = 180;
 
@@ -38,6 +39,9 @@ CRITICAL FORMAT RULES:
 - Your entire response must start with < and end with >. Nothing else.`;
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin(request, ["admin", "content"]);
+  if (!auth.ok) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const sponsorHandle = (body.sponsorHandle || "").trim().replace(/^@/, "");
   if (!sponsorHandle) return NextResponse.json({ error: "Missing sponsorHandle" }, { status: 400 });

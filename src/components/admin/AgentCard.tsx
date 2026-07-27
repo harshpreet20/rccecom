@@ -1,20 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-function sanitizeReport(raw: string): string {
-  let text = raw.trim();
-  text = text.replace(/^```(?:html)?\s*/i, "").replace(/\s*```\s*$/, "");
-  const firstTag = text.indexOf("<");
-  const lastTag = text.lastIndexOf(">");
-  if (firstTag !== -1 && lastTag !== -1 && lastTag > firstTag) {
-    text = text.substring(firstTag, lastTag + 1);
-  }
-  if (!text.startsWith("<")) {
-    text = `<div style="font-family:-apple-system,sans-serif;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
-  }
-  return text;
-}
+import { useAuth } from "@/components/admin/AuthProvider";
+import { sanitizeReportHtml } from "@/lib/admin/sanitize-report";
 
 interface ConfigOption {
   label: string;
@@ -34,6 +22,7 @@ interface AgentCardProps {
 }
 
 export default function AgentCard({ name, description, icon, color, bgColor, endpoint, configOptions, configKey, defaultBody }: AgentCardProps) {
+  const { session } = useAuth();
   const [result, setResult] = useState<string | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
   const [agentKey, setAgentKey] = useState<string>("");
@@ -60,10 +49,13 @@ export default function AgentCard({ name, description, icon, color, bgColor, end
       if (configKey && selectedConfig) {
         bodyData[configKey] = selectedConfig;
       }
+      const headers: Record<string, string> = {};
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       if (Object.keys(bodyData).length > 0) {
-        fetchOptions.headers = { "Content-Type": "application/json" };
+        headers["Content-Type"] = "application/json";
         fetchOptions.body = JSON.stringify(bodyData);
       }
+      fetchOptions.headers = headers;
       const res = await fetch(endpoint, fetchOptions);
       const json = await res.json();
       setRunTime(Math.round((Date.now() - start) / 1000));
@@ -143,7 +135,7 @@ export default function AgentCard({ name, description, icon, color, bgColor, end
             <>
               <div
                 className="bg-[#f5f6f8] rounded-xl p-4 text-sm text-gray-700 leading-relaxed max-h-[500px] overflow-y-auto report-html neu-pressed"
-                dangerouslySetInnerHTML={{ __html: sanitizeReport(result) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeReportHtml(result) }}
               />
               {/* Feedback buttons */}
               {reportId && (
