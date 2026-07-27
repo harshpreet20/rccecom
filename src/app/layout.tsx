@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { CartProvider } from "@/lib/cart-context";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { CartDrawer } from "@/components/CartDrawer";
 import { storeConfig } from "@/lib/config";
 import { organizationJsonLd } from "@/lib/seo";
 
@@ -52,12 +48,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }}
         />
-        <CartProvider>
-          <Header />
-          <main className="min-h-[70vh]">{children}</main>
-          <Footer />
-          <CartDrawer />
-        </CartProvider>
+        {children}
       </body>
     </html>
   );
