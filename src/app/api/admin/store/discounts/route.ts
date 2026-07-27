@@ -16,6 +16,10 @@ const FIELDS = [
 
 const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function pick(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
   for (const f of FIELDS) {
@@ -59,11 +63,14 @@ export async function POST(request: Request) {
   const token = getBearer(request);
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: Record<string, unknown>;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if (!isPlainObject(body)) {
+    return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
   }
 
   const row = pick(body);
@@ -92,11 +99,14 @@ export async function PATCH(request: Request) {
   const token = getBearer(request);
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: Record<string, unknown>;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if (!isPlainObject(body)) {
+    return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
   }
 
   const id = body.id;
@@ -106,10 +116,25 @@ export async function PATCH(request: Request) {
 
   const updates = pick(body);
   if (typeof updates.code === "string") updates.code = updates.code.trim().toUpperCase();
-  const valueError = validateValue(updates.value, updates.type);
-  if (valueError) return NextResponse.json({ error: valueError }, { status: 400 });
 
   const supabase = authedClient(token);
+
+  // Resolve the effective discount type from the existing row when the
+  // update doesn't specify one, so a percentage discount's 100% cap can't
+  // be bypassed by omitting `type` from the PATCH body.
+  let effectiveType = updates.type;
+  if (effectiveType === undefined) {
+    const { data: existing } = await supabase
+      .from("discounts")
+      .select("type")
+      .eq("id", id)
+      .maybeSingle();
+    effectiveType = existing?.type;
+  }
+
+  const valueError = validateValue(updates.value, effectiveType);
+  if (valueError) return NextResponse.json({ error: valueError }, { status: 400 });
+
   const { data, error } = await supabase
     .from("discounts")
     .update(updates)
