@@ -43,6 +43,44 @@ body {
     radial-gradient(50% 50% at 15% 30%, rgba(201, 162, 75, 0.12), transparent 70%);
 }
 
+/*
+ * Tactile primary button — premium 3D/press feel matching the storefront's
+ * gold accent (not the /admin CRM's flat neumorphic style). Gradient fill,
+ * outer elevation shadow, a thin inner top highlight, and a pressed state.
+ */
+.btn-tactile {
+  position: relative;
+  background-image: linear-gradient(180deg, #e0c074 0%, #c9a24b 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.15) inset,
+    0 8px 20px -6px rgba(0, 0, 0, 0.55),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+.btn-tactile:hover {
+  filter: brightness(1.05);
+}
+.btn-tactile:active {
+  transform: scale(0.98);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.25) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+}
+.btn-tactile:disabled {
+  filter: grayscale(0.15) brightness(0.85);
+  cursor: not-allowed;
+}
+
+.btn-tactile-outline {
+  position: relative;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.4);
+}
+.btn-tactile-outline:active {
+  transform: scale(0.98);
+}
+
 @keyframes pop {
   0% {
     transform: scale(0.9);
