@@ -172,7 +172,7 @@ export default function ProductsPage() {
 
   async function remove(p: Product) {
     if (!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
-    await fetch(`/api/store/products?id=${p.id}`, {
+    await fetch(`/api/admin/store/products?id=${p.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
