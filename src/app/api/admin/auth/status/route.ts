@@ -1,19 +1,29 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/admin/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  const authHeader = request.headers.get("authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+  if (!token) {
+    return NextResponse.json({ error: "Missing bearer token" }, { status: 401 });
   }
 
-  const { authUserId, email } = body;
-  if (!authUserId || !email) {
-    return NextResponse.json({ error: "authUserId and email are required" }, { status: 400 });
+  const anon = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const { data: verified, error: verifyError } = await anon.auth.getUser(token);
+  if (verifyError || !verified?.user) {
+    return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
+  }
+
+  const authUserId = verified.user.id;
+  const email = verified.user.email;
+  if (!email) {
+    return NextResponse.json({ error: "Account has no email" }, { status: 400 });
   }
 
   try {
@@ -33,7 +43,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // Match by email for migrated users whose auth_user_id changed
+    // Match by email for migrated users whose auth_user_id changed. Both
+    // authUserId and email come from the verified session above, never from
+    // the request body, so this can't be used to rebind an arbitrary row.
     const { data: byEmail } = await supabase
       .from("app_users")
       .select("*")
