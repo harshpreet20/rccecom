@@ -92,11 +92,13 @@ export default function CategoriesPage() {
 
   async function remove(c: Category) {
     if (!confirm(`Delete "${c.name}"?`)) return;
-    await fetch(`/api/store/categories?id=${c.id}`, {
+    const res = await fetch(`/api/admin/store/categories?id=${c.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    setCategories((prev) => prev.filter((x) => x.id !== c.id));
+    if (res.ok) {
+      setCategories((prev) => prev.filter((x) => x.id !== c.id));
+    }
   }
 
   if (authLoading || !isStaff) {
