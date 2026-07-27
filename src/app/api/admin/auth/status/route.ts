@@ -76,7 +76,26 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      // A concurrent request from the same account may have won the race
+      // and inserted this row first (unique constraint on email/auth_user_id).
+      // Re-read instead of surfacing a 500 to the loser.
+      if (error.code === "23505") {
+        const { data: existing } = await supabase
+          .from("app_users")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (existing) {
+          return NextResponse.json({
+            role: existing.role,
+            status: existing.status,
+            userId: existing.id,
+          });
+        }
+      }
+      throw new Error(error.message);
+    }
 
     return NextResponse.json({
       role: newUser.role,
