@@ -1,36 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/admin/supabase-server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 export const dynamic = "force-dynamic";
 
-async function requireAdmin(request: Request) {
-  const authHeader = request.headers.get("authorization") || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
-  if (!token) return null;
-
-  const anon = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-  const { data: verified } = await anon.auth.getUser(token);
-  if (!verified?.user) return null;
-
-  const admin = createAdminClient();
-  const { data: caller } = await admin
-    .from("app_users")
-    .select("role, status")
-    .eq("auth_user_id", verified.user.id)
-    .single();
-
-  if (!caller || caller.role !== "admin" || caller.status !== "approved") return null;
-  return verified.user;
-}
-
 export async function GET(request: Request) {
-  if (!(await requireAdmin(request))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdmin(request, ["admin"]);
+  if (!auth.ok) return auth.response;
 
   try {
     const supabase = createAdminClient();
@@ -47,9 +23,8 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!(await requireAdmin(request))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdmin(request, ["admin"]);
+  if (!auth.ok) return auth.response;
 
   let body;
   try {
@@ -86,9 +61,8 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (!(await requireAdmin(request))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdmin(request, ["admin"]);
+  if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("id");
