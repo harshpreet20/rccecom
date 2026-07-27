@@ -54,12 +54,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [statusError, setStatusError] = useState(false);
   const [sb] = useState<SupabaseClient | null>(() => getClientSideSupabase());
 
-  async function fetchUserStatus(authUser: User) {
+  async function fetchUserStatus(authUser: User, accessToken?: string | null) {
+    if (!accessToken) {
+      setRole(null);
+      setStatus(null);
+      setStatusError(true);
+      return;
+    }
     try {
       const res = await fetch("/api/admin/auth/status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authUserId: authUser.id, email: authUser.email }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
       });
       const json = await res.json();
       if (!res.ok || json.error) throw new Error(json.error || `status ${res.status}`);
@@ -85,7 +94,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchUserStatus(session.user);
+          await fetchUserStatus(session.user, session.access_token);
         }
       })
       .catch(() => {
@@ -98,7 +107,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchUserStatus(session.user);
+        await fetchUserStatus(session.user, session.access_token);
       } else {
         setRole(null);
         setStatus(null);
@@ -113,9 +122,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   // Re-check role/status when the tab regains focus, so an admin approving or
   // promoting this user elsewhere shows up without requiring a manual sign-out.
   useEffect(() => {
-    if (!user) return;
+    if (!user || !session) return;
     function onFocus() {
-      if (user) fetchUserStatus(user);
+      if (user && session) fetchUserStatus(user, session.access_token);
     }
     function onVisibilityChange() {
       if (document.visibilityState === "visible") onFocus();
@@ -126,12 +135,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [user]);
+  }, [user, session]);
 
   const retryStatus = () => {
-    if (user) {
+    if (user && session) {
       setStatusError(false);
-      fetchUserStatus(user);
+      fetchUserStatus(user, session.access_token);
     }
   };
 
